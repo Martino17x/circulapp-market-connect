@@ -20,8 +20,8 @@ interface Props {
 
 const MaterialCard = ({ material }: Props) => {
   return (
-    <article className="group animate-fade-in">
-      <Card className="h-full overflow-hidden hover-scale group-hover:shadow-md">
+    <article className="group">
+      <Card className="h-full overflow-hidden transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md">
         <div className="aspect-[4/3] w-full overflow-hidden">
           <img
             src={material.image}

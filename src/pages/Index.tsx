@@ -82,7 +82,7 @@ const Index = () => {
             <span className="hidden md:inline">Categoría: {filters.category}</span>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((m) => (
               <MaterialCard key={m.id} material={m} />
             ))}
