@@ -12,8 +12,8 @@ const BrandHeader = () => {
           <span className="text-lg font-extrabold tracking-tight text-primary-foreground">Circulapp</span>
         </Link>
         <div className="flex items-center gap-4">
-          <Link to="/ingresar" className="story-link text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground">
-            Iniciar sesión
+          <Link to="/auth" className="story-link text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground">
+            Acceder
           </Link>
           <Button
             asChild

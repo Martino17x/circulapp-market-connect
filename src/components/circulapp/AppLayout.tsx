@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Outlet, useLocation, NavLink } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Home,
   Plus,
@@ -178,17 +179,7 @@ function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <button 
-                    className="w-full text-left text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground flex items-center gap-3"
-                    onClick={() => {
-                      // TODO: Implement logout
-                      console.log("Cerrar sesión");
-                    }}
-                    title={collapsed ? "Cerrar sesión" : undefined}
-                  >
-                    <LogOut className="h-4 w-4 flex-shrink-0" />
-                    {!collapsed && <span>Cerrar sesión</span>}
-                  </button>
+                  <LogoutButton collapsed={collapsed} />
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -199,8 +190,24 @@ function AppSidebar() {
   );
 }
 
+function LogoutButton({ collapsed }: { collapsed: boolean }) {
+  const { signOut } = useAuth();
+  
+  return (
+    <button 
+      className="w-full text-left text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground flex items-center gap-3"
+      onClick={signOut}
+      title={collapsed ? "Cerrar sesión" : undefined}
+    >
+      <LogOut className="h-4 w-4 flex-shrink-0" />
+      {!collapsed && <span>Cerrar sesión</span>}
+    </button>
+  );
+}
+
 function TopBar() {
   const isMobile = useIsMobile();
+  const { user, signOut } = useAuth();
   
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-background px-4 lg:px-6">
@@ -227,16 +234,18 @@ function TopBar() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder-avatar.jpg" alt="Ana García" />
-                <AvatarFallback className="bg-primary text-primary-foreground">AG</AvatarFallback>
+                <AvatarImage src="/placeholder-avatar.jpg" alt={user?.email || "Usuario"} />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {user?.email?.charAt(0).toUpperCase() || "U"}
+                </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Ana García</p>
-                <p className="text-xs leading-none text-muted-foreground">ana@email.com</p>
+                <p className="text-sm font-medium leading-none">{user?.email}</p>
+                <p className="text-xs leading-none text-muted-foreground">Usuario activo</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -251,7 +260,7 @@ function TopBar() {
               <span>Configuración</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem onClick={signOut} className="text-destructive cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Cerrar sesión</span>
             </DropdownMenuItem>
