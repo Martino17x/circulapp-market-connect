@@ -16,16 +16,13 @@ const BrandHeader = () => {
             Iniciar sesión
           </Link>
           <Button
+            asChild
             variant="secondary"
-            onClick={() =>
-              toast({
-                title: "Pronto",
-                description: "Publicación de materiales disponible en la siguiente versión",
-              })
-            }
             className="hover-scale"
           >
-            Publicar material
+            <Link to="/app">
+              Acceder al panel
+            </Link>
           </Button>
         </div>
       </nav>
