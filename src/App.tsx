@@ -9,6 +9,7 @@ import SignIn from "./pages/SignIn";
 import AppLayout from "./components/circulapp/AppLayout";
 import Dashboard from "./pages/app/Dashboard";
 import ComingSoon from "./pages/app/ComingSoon";
+import Profile from "./pages/app/Profile";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +31,7 @@ const App = () => (
             <Route path="mapa" element={<ComingSoon />} />
             <Route path="chat" element={<ComingSoon />} />
             <Route path="recoleccion" element={<ComingSoon />} />
-            <Route path="perfil" element={<ComingSoon />} />
+            <Route path="perfil" element={<Profile />} />
             <Route path="denuncias" element={<ComingSoon />} />
           </Route>
           
