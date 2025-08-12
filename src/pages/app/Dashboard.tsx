@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, TrendingUp, Users, Recycle, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Mock data para el dashboard
 const stats = [
@@ -83,6 +84,22 @@ const setMeta = (name: string, content: string) => {
 };
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  
+  // Extract user name from user metadata or email
+  const getUserName = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name.split(' ')[0];
+    }
+    if (user?.user_metadata?.username) {
+      return user.user_metadata.username;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'Usuario';
+  };
+
   useEffect(() => {
     document.title = "Inicio | Circulapp";
     setMeta(
@@ -97,7 +114,7 @@ export default function Dashboard() {
       <section>
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">¡Hola, Ana!</h1>
+            <h1 className="text-2xl font-bold tracking-tight">¡Hola, {getUserName()}!</h1>
             <p className="text-muted-foreground">
               Tu impacto en la economía circular está creciendo. Aquí está tu actividad reciente.
             </p>
