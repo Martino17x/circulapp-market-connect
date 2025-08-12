@@ -10,6 +10,7 @@ import AppLayout from "./components/circulapp/AppLayout";
 import Dashboard from "./pages/app/Dashboard";
 import ComingSoon from "./pages/app/ComingSoon";
 import Profile from "./pages/app/Profile";
+import MapPage from "./pages/app/MapPage";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +29,7 @@ const App = () => (
             <Route index element={<Dashboard />} />
             <Route path="publicar" element={<ComingSoon />} />
             <Route path="buscar" element={<ComingSoon />} />
-            <Route path="mapa" element={<ComingSoon />} />
+            <Route path="mapa" element={<MapPage />} />
             <Route path="chat" element={<ComingSoon />} />
             <Route path="recoleccion" element={<ComingSoon />} />
             <Route path="perfil" element={<Profile />} />
