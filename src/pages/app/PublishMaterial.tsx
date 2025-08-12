@@ -192,9 +192,9 @@ export default function PublishMaterial() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Title */}
+              {/* Título */}
               <div className="space-y-2">
-                <Label htmlFor="title">Título del material *</Label>
+                <Label htmlFor="title">Título *</Label>
                 <Input
                   id="title"
                   placeholder="Ej: Cartón corrugado limpio"
@@ -205,70 +205,9 @@ export default function PublishMaterial() {
                 )}
               </div>
 
-              {/* Material Type */}
-              <div className="space-y-2">
-                <Label htmlFor="material_type">Tipo de material *</Label>
-                <Select onValueChange={(value) => setValue("material_type", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona el tipo de material" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {materialTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.material_type && (
-                  <p className="text-sm text-destructive">Selecciona un tipo de material</p>
-                )}
-              </div>
-
-              {/* Weight */}
-              <div className="space-y-2">
-                <Label htmlFor="weight_kg">Peso estimado (kg) *</Label>
-                <div className="relative">
-                  <Scale className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="weight_kg"
-                    type="number"
-                    step="0.1"
-                    min="0.1"
-                    placeholder="Ej: 5.5"
-                    className="pl-10"
-                    {...register("weight_kg", {
-                      required: "El peso es obligatorio",
-                      valueAsNumber: true,
-                      min: { value: 0.1, message: "El peso debe ser mayor a 0" }
-                    })}
-                  />
-                </div>
-                {errors.weight_kg && (
-                  <p className="text-sm text-destructive">{errors.weight_kg.message}</p>
-                )}
-              </div>
-
-              {/* Location */}
-              <div className="space-y-2">
-                <Label htmlFor="location_name">Ubicación *</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="location_name"
-                    placeholder="Ej: Palermo, CABA"
-                    className="pl-10"
-                    {...register("location_name", { required: "La ubicación es obligatoria" })}
-                  />
-                </div>
-                {errors.location_name && (
-                  <p className="text-sm text-destructive">{errors.location_name.message}</p>
-                )}
-              </div>
-
-              {/* Price */}
+              {/* Precio */}
               <div className="space-y-3">
-                <Label>Precio</Label>
+                <Label>Precio *</Label>
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="is_free"
@@ -304,7 +243,68 @@ export default function PublishMaterial() {
                 )}
               </div>
 
-              {/* Description */}
+              {/* Peso estimado */}
+              <div className="space-y-2">
+                <Label htmlFor="weight_kg">Peso estimado (kg) *</Label>
+                <div className="relative">
+                  <Scale className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="weight_kg"
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    placeholder="Ej: 5.5"
+                    className="pl-10"
+                    {...register("weight_kg", {
+                      required: "El peso es obligatorio",
+                      valueAsNumber: true,
+                      min: { value: 0.1, message: "El peso debe ser mayor a 0" }
+                    })}
+                  />
+                </div>
+                {errors.weight_kg && (
+                  <p className="text-sm text-destructive">{errors.weight_kg.message}</p>
+                )}
+              </div>
+
+              {/* Categoría */}
+              <div className="space-y-2">
+                <Label htmlFor="material_type">Categoría *</Label>
+                <Select onValueChange={(value) => setValue("material_type", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona la categoría del material" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {materialTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.material_type && (
+                  <p className="text-sm text-destructive">Selecciona una categoría</p>
+                )}
+              </div>
+
+              {/* Ubicación */}
+              <div className="space-y-2">
+                <Label htmlFor="location_name">Ubicación *</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="location_name"
+                    placeholder="Ej: Palermo, CABA"
+                    className="pl-10"
+                    {...register("location_name", { required: "La ubicación es obligatoria" })}
+                  />
+                </div>
+                {errors.location_name && (
+                  <p className="text-sm text-destructive">{errors.location_name.message}</p>
+                )}
+              </div>
+
+              {/* Descripción */}
               <div className="space-y-2">
                 <Label htmlFor="description">Descripción *</Label>
                 <Textarea
@@ -318,9 +318,9 @@ export default function PublishMaterial() {
                 )}
               </div>
 
-              {/* Image Upload */}
+              {/* Fotos del artículo */}
               <div className="space-y-3">
-                <Label htmlFor="images">Fotos del material *</Label>
+                <Label htmlFor="images">Fotos del artículo *</Label>
                 <div className="space-y-4">
                   {/* Image previews grid */}
                   {imagePreviews.length > 0 && (
