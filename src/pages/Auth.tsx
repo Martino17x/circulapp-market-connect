@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { Leaf, Mail, Lock, User, ArrowLeft, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import signinIllustration from "@/assets/circulapp/signin-illustration.jpg";
@@ -34,13 +34,16 @@ const ensureCanonical = () => {
 
 export default function Auth() {
   const { user, signIn, signUp, loading } = useAuth();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [currentView, setCurrentView] = useState<'signin' | 'signup' | 'forgot'>('signin');
+  const [currentView, setCurrentView] = useState<'signin' | 'signup' | 'forgot' | 'reset'>('signin');
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
     document.title = "Acceder | Circulapp";
@@ -49,7 +52,19 @@ export default function Auth() {
       "Únete a Circulapp: la comunidad de economía circular para reutilizar materiales domiciliarios."
     );
     ensureCanonical();
-  }, []);
+
+    // Check if we're on the reset-password page
+    if (location.pathname === '/reset-password') {
+      setCurrentView('reset');
+      
+      // Handle password recovery session
+      supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          setIsPasswordRecovery(true);
+        }
+      });
+    }
+  }, [location.pathname]);
 
   // Redirect if already authenticated
   if (!loading && user) {
@@ -138,6 +153,40 @@ export default function Auth() {
     setIsLoading(false);
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Por favor ingresa una nueva contraseña",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo actualizar la contraseña",
+      });
+    } else {
+      toast({
+        title: "¡Contraseña actualizada!",
+        description: "Tu contraseña ha sido actualizada exitosamente",
+      });
+      setTimeout(() => {
+        window.location.href = '/app';
+      }, 2000);
+    }
+    setIsLoading(false);
+  };
+
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     setIsLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
@@ -200,6 +249,14 @@ export default function Auth() {
                 <h1 className="text-2xl font-semibold tracking-tight">Recuperar contraseña</h1>
                 <p className="text-sm text-muted-foreground">
                   Te enviaremos un enlace para restablecer tu contraseña.
+                </p>
+              </>
+            )}
+            {currentView === 'reset' && (
+              <>
+                <h1 className="text-2xl font-semibold tracking-tight">Nueva contraseña</h1>
+                <p className="text-sm text-muted-foreground">
+                  Ingresa tu nueva contraseña para completar el proceso.
                 </p>
               </>
             )}
@@ -476,6 +533,45 @@ export default function Auth() {
                     setCurrentView('signin');
                     setResetEmailSent(false);
                   }}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Volver a iniciar sesión
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Vista de nueva contraseña */}
+          {currentView === 'reset' && (
+            <div className="space-y-4">
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">Nueva contraseña</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input 
+                      id="new-password"
+                      type="password" 
+                      placeholder="••••••••"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Actualizando..." : "Actualizar contraseña"}
+                </Button>
+              </form>
+
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setCurrentView('signin')}
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
                 >
                   <ArrowLeft className="w-4 h-4" />

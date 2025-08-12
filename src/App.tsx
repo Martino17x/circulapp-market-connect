@@ -26,6 +26,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<Auth />} />
             
             {/* App routes (authenticated) */}
             <Route path="/app" element={
