@@ -163,7 +163,7 @@ const Index = () => {
             <Button size="lg" asChild className="shadow-elegant">
               <Link to="/app/publicar">
                 <Plus className="mr-2 h-5 w-5" />
-                Publicar Material
+                Publicar Artículo
               </Link>
             </Button>
           </div>
@@ -225,7 +225,7 @@ const Index = () => {
               <Button asChild>
                 <Link to="/app/publicar">
                   <Plus className="mr-2 h-4 w-4" />
-                  Publicar primer material
+                  Publicar primer artículo
                 </Link>
               </Button>
             </div>

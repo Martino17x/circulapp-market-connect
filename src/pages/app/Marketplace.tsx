@@ -92,8 +92,11 @@ export default function Marketplace() {
           weightKg: Number(item.weight_kg),
           locationName: item.location_name,
           distanceKm: Math.random() * 5 + 0.5, // TODO: Calculate real distance
-          image: item.image_url || null,
-          userName: profile?.full_name || profile?.username || 'Usuario Anónimo'
+          image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
+          userName: profile?.full_name || profile?.username || 'Usuario Anónimo',
+          title: item.title,
+          price: 0,
+          isFree: true
         };
       }) || [];
 
@@ -176,8 +179,11 @@ export default function Marketplace() {
           weightKg: Number(item.weight_kg),
           locationName: item.location_name,
           distanceKm: Math.random() * 5 + 0.5, // TODO: Calculate real distance
-          image: item.image_url || null,
-          userName: profile?.full_name || profile?.username || 'Usuario Anónimo'
+          image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
+          userName: profile?.full_name || profile?.username || 'Usuario Anónimo',
+          title: item.title,
+          price: 0,
+          isFree: true
         };
       }) || [];
 
@@ -224,7 +230,7 @@ export default function Marketplace() {
             <Button asChild>
               <Link to="/app/publicar">
                 <Plus className="mr-2 h-4 w-4" />
-                Publicar material
+                Publicar Artículo
               </Link>
             </Button>
           </div>
