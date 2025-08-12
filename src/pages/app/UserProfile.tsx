@@ -118,7 +118,10 @@ export default function UserProfile() {
           location_name,
           image_url,
           status,
-          created_at
+          created_at,
+          price,
+          is_free,
+          user_id
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -133,7 +136,11 @@ export default function UserProfile() {
         distanceKm: 0, // Own materials
         image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
         userName: getUserName(),
-        status: item.status
+        status: item.status,
+        title: item.title,
+        price: item.price || 0,
+        isFree: item.is_free || false,
+        user_id: item.user_id
       })) || [];
 
       setUserMaterials(formattedMaterials);
@@ -295,7 +302,7 @@ export default function UserProfile() {
                 ) : activeMaterials.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {activeMaterials.map((material) => (
-                      <MaterialCard key={material.id} material={material} />
+                      <MaterialCard key={material.id} material={material} showEditButton={true} />
                     ))}
                   </div>
                 ) : (
@@ -340,7 +347,7 @@ export default function UserProfile() {
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {completedMaterials.map((material) => (
                       <div key={material.id} className="relative">
-                        <MaterialCard material={material} />
+                        <MaterialCard material={material} showEditButton={true} />
                         <Badge 
                           variant="secondary" 
                           className="absolute top-2 right-2 bg-green-100 text-green-800"
@@ -388,7 +395,7 @@ export default function UserProfile() {
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {userMaterials.map((material) => (
                       <div key={material.id} className="relative">
-                        <MaterialCard material={material} />
+                        <MaterialCard material={material} showEditButton={true} />
                         {material.status === 'retirado' && (
                           <Badge 
                             variant="secondary" 

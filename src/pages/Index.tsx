@@ -55,6 +55,7 @@ const Index = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('Error fetching materials:', error);
         toast({
           title: "Error",
           description: "No se pudieron cargar los materiales",
@@ -63,19 +64,28 @@ const Index = () => {
         return;
       }
 
+      if (!data || data.length === 0) {
+        setMaterials([]);
+        return;
+      }
+
       // Fetch user profiles for each material
-      const userIds = [...new Set(data?.map(item => item.user_id) || [])];
-      const { data: profiles } = await supabase
+      const userIds = [...new Set(data.map(item => item.user_id))];
+      const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('user_id, username, full_name')
         .in('user_id', userIds);
+
+      if (profileError) {
+        console.error('Error fetching profiles:', profileError);
+      }
 
       const profileMap = profiles?.reduce((acc, profile) => {
         acc[profile.user_id] = profile;
         return acc;
       }, {} as Record<string, any>) || {};
 
-      const formattedMaterials: Material[] = data?.map(item => {
+      const formattedMaterials: Material[] = data.map(item => {
         const profile = profileMap[item.user_id];
         return {
           id: item.id,
@@ -89,10 +99,11 @@ const Index = () => {
           price: item.is_free ? 0 : Number(item.price || 0),
           isFree: item.is_free || false
         };
-      }) || [];
+      });
 
       setMaterials(formattedMaterials);
     } catch (error) {
+      console.error('Unexpected error:', error);
       toast({
         title: "Error",
         description: "Ocurrió un error al cargar los materiales",

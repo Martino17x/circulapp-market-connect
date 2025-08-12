@@ -1,9 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Scale, User, MessageCircle, Eye, DollarSign } from "lucide-react";
+import { MapPin, Scale, User, MessageCircle, Eye, DollarSign, Edit } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type Material = {
   id: string;
@@ -17,13 +18,16 @@ export type Material = {
   title?: string;
   price?: number;
   isFree?: boolean;
+  user_id?: string;
 };
 
 interface Props {
   material: Material;
+  showEditButton?: boolean;
 }
 
-const MaterialCard = ({ material }: Props) => {
+const MaterialCard = ({ material, showEditButton = false }: Props) => {
+  const { user } = useAuth();
   return (
     <article className="group animate-fade-in">
       <Card className="h-full overflow-hidden hover-scale group-hover:shadow-md">
@@ -91,12 +95,21 @@ const MaterialCard = ({ material }: Props) => {
 
           {/* Botones de acción */}
           <div className="flex items-center gap-2 pt-2 border-t">
-            <Button variant="outline" className="flex-1" asChild>
-              <Link to={`/app/material/${material.id}`}>
-                <Eye className="mr-2 h-4 w-4" />
-                Ver más
-              </Link>
-            </Button>
+            {showEditButton && user?.id === material.user_id ? (
+              <Button variant="outline" className="flex-1" asChild>
+                <Link to={`/app/material/${material.id}/edit`}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Editar
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="outline" className="flex-1" asChild>
+                <Link to={`/app/material/${material.id}`}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Ver más
+                </Link>
+              </Button>
+            )}
             <Button
               variant="default"
               className="flex-1"

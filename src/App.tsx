@@ -18,6 +18,7 @@ import Marketplace from "./pages/app/Marketplace";
 import PublishMaterial from "./pages/app/PublishMaterial";
 import UserProfile from "./pages/app/UserProfile";
 import MaterialDetail from "./pages/app/MaterialDetail";
+import EditMaterial from "./pages/app/EditMaterial";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="chat" element={<ComingSoon />} />
               <Route path="recoleccion" element={<ComingSoon />} />
               <Route path="material/:id" element={<MaterialDetail />} />
+              <Route path="material/:id/edit" element={<EditMaterial />} />
               <Route path="perfil" element={<UserProfile />} />
               <Route path="denuncias" element={<ComingSoon />} />
             </Route>
