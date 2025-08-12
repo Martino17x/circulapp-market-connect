@@ -57,17 +57,54 @@ export default function Auth() {
     if (location.pathname === '/reset-password') {
       setCurrentView('reset');
       
-      // Handle password recovery session
-      supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          setIsPasswordRecovery(true);
-        }
-      });
+      // Check URL for access token and refresh token (indicates password recovery)
+      const urlParams = new URLSearchParams(window.location.search);
+      const accessToken = urlParams.get('access_token');
+      const refreshToken = urlParams.get('refresh_token');
+      const type = urlParams.get('type');
+
+      console.log('URL params:', { accessToken, refreshToken, type });
+
+      if (accessToken && refreshToken && type === 'recovery') {
+        setIsPasswordRecovery(true);
+        console.log('Password recovery session detected');
+        
+        // Set the session using the tokens from URL
+        supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        }).then(({ error }) => {
+          if (error) {
+            console.error('Error setting session:', error);
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Enlace de recuperación inválido o expirado",
+            });
+          } else {
+            console.log('Session set successfully');
+          }
+        });
+      } else {
+        console.log('No recovery tokens found in URL');
+        setIsPasswordRecovery(false);
+      }
     }
+
+    // Handle auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change:', event, session);
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && location.pathname === '/reset-password')) {
+        setIsPasswordRecovery(true);
+        setCurrentView('reset');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [location.pathname]);
 
-  // Redirect if already authenticated
-  if (!loading && user) {
+  // Redirect if already authenticated and not on password recovery
+  if (!loading && user && !isPasswordRecovery) {
     return <Navigate to="/app" replace />;
   }
 
@@ -164,26 +201,50 @@ export default function Auth() {
       return;
     }
 
-    setIsLoading(true);
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-
-    if (error) {
+    if (newPassword.length < 6) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo actualizar la contraseña",
+        description: "La contraseña debe tener al menos 6 caracteres",
       });
-    } else {
-      toast({
-        title: "¡Contraseña actualizada!",
-        description: "Tu contraseña ha sido actualizada exitosamente",
-      });
-      setTimeout(() => {
-        window.location.href = '/app';
-      }, 2000);
+      return;
     }
+
+    setIsLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        console.error('Password update error:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No se pudo actualizar la contraseña. " + error.message,
+        });
+      } else {
+        toast({
+          title: "¡Contraseña actualizada!",
+          description: "Tu contraseña ha sido actualizada exitosamente",
+        });
+        
+        // Sign out to clear the recovery session and redirect to login
+        await supabase.auth.signOut();
+        setTimeout(() => {
+          window.location.href = '/auth';
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Ocurrió un error inesperado. Por favor intenta nuevamente.",
+      });
+    }
+    
     setIsLoading(false);
   };
 
@@ -256,7 +317,10 @@ export default function Auth() {
               <>
                 <h1 className="text-2xl font-semibold tracking-tight">Nueva contraseña</h1>
                 <p className="text-sm text-muted-foreground">
-                  Ingresa tu nueva contraseña para completar el proceso.
+                  {isPasswordRecovery ? 
+                    "Ingresa tu nueva contraseña para completar el proceso." :
+                    "Accede desde el enlace de recuperación que recibiste por email."
+                  }
                 </p>
               </>
             )}
@@ -545,28 +609,42 @@ export default function Auth() {
           {/* Vista de nueva contraseña */}
           {currentView === 'reset' && (
             <div className="space-y-4">
-              <form onSubmit={handleResetPassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">Nueva contraseña</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <Input 
-                      id="new-password"
-                      type="password" 
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="pl-10"
-                      required
-                      minLength={6}
-                    />
+              {isPasswordRecovery ? (
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">Nueva contraseña</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Input 
+                        id="new-password"
+                        type="password" 
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="pl-10"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Mínimo 6 caracteres
+                    </p>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Actualizando..." : "Actualizar contraseña"}
+                  </Button>
+                </form>
+              ) : (
+                <div className="text-center space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">Enlace requerido</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Para cambiar tu contraseña, necesitas acceder desde el enlace que recibiste por email.
+                    </p>
                   </div>
                 </div>
-
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Actualizando..." : "Actualizar contraseña"}
-                </Button>
-              </form>
+              )}
 
               <div className="flex justify-center">
                 <button
