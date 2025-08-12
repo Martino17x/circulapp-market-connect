@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Scale, User, MessageCircle, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 export type Material = {
   id: string;
@@ -44,11 +45,13 @@ const MaterialCard = ({ material }: Props) => {
           </div>
 
           <div className="flex items-center gap-2 pt-2">
-            <Button variant="outline" className="flex-1">
-              <Eye /> Ver más
+            <Button variant="outline" className="flex-1" asChild>
+              <Link to={`/app/material/${material.id}`}>
+                <Eye /> Ver más
+              </Link>
             </Button>
             <Button
-              variant="hero"
+              variant="default"
               className="flex-1"
               onClick={() =>
                 toast({ title: "Chat", description: "Pronto podrás contactar por chat al oferente." })

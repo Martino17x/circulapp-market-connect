@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import SearchFilters, { FilterValues } from "@/components/circulapp/SearchFilters";
 import MaterialCard, { Material } from "@/components/circulapp/MaterialCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Plus, Search, SlidersHorizontal, Map } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,15 +72,30 @@ export default function Marketplace() {
         return;
       }
 
-      const formattedMaterials: Material[] = data?.map(item => ({
-        id: item.id,
-        type: item.material_type,
-        weightKg: Number(item.weight_kg),
-        locationName: item.location_name,
-        distanceKm: Math.random() * 5 + 0.5, // Simulated distance
-        image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
-        userName: 'Usuario' // Will fetch from profiles separately if needed
-      })) || [];
+      // Fetch user profiles for each material
+      const userIds = [...new Set(data?.map(item => item.user_id) || [])];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, username, full_name')
+        .in('user_id', userIds);
+
+      const profileMap = profiles?.reduce((acc, profile) => {
+        acc[profile.user_id] = profile;
+        return acc;
+      }, {} as Record<string, any>) || {};
+
+      const formattedMaterials: Material[] = data?.map(item => {
+        const profile = profileMap[item.user_id];
+        return {
+          id: item.id,
+          type: item.material_type,
+          weightKg: Number(item.weight_kg),
+          locationName: item.location_name,
+          distanceKm: Math.random() * 5 + 0.5, // TODO: Calculate real distance
+          image: item.image_url || null,
+          userName: profile?.full_name || profile?.username || 'Usuario Anónimo'
+        };
+      }) || [];
 
       setMaterials(formattedMaterials);
     } catch (error) {
@@ -100,10 +115,82 @@ export default function Marketplace() {
     applyFilters(newFilters);
   };
 
-  const applyFilters = (filterValues: FilterValues) => {
-    // This would be implemented to filter the materials based on the filter values
-    // For now, we'll just trigger a refetch if needed
-    fetchMaterials();
+  const applyFilters = async (filterValues: FilterValues) => {
+    try {
+      setLoading(true);
+      let query = supabase
+        .from('materials')
+        .select(`
+          id,
+          title,
+          description,
+          material_type,
+          weight_kg,
+          location_name,
+          image_url,
+          created_at,
+          user_id
+        `)
+        .eq('status', 'disponible');
+
+      // Apply category filter
+      if (filterValues.category && filterValues.category !== 'todos') {
+        query = query.eq('material_type', filterValues.category);
+      }
+
+      // Apply weight filter
+      if (filterValues.minWeight > 0) {
+        query = query.gte('weight_kg', filterValues.minWeight);
+      }
+
+      query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "No se pudieron aplicar los filtros",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Fetch user profiles
+      const userIds = [...new Set(data?.map(item => item.user_id) || [])];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, username, full_name')
+        .in('user_id', userIds);
+
+      const profileMap = profiles?.reduce((acc, profile) => {
+        acc[profile.user_id] = profile;
+        return acc;
+      }, {} as Record<string, any>) || {};
+
+      const formattedMaterials: Material[] = data?.map(item => {
+        const profile = profileMap[item.user_id];
+        return {
+          id: item.id,
+          type: item.material_type,
+          weightKg: Number(item.weight_kg),
+          locationName: item.location_name,
+          distanceKm: Math.random() * 5 + 0.5, // TODO: Calculate real distance
+          image: item.image_url || null,
+          userName: profile?.full_name || profile?.username || 'Usuario Anónimo'
+        };
+      }) || [];
+
+      setMaterials(formattedMaterials);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al aplicar los filtros",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredMaterials = materials.filter(material => {
@@ -127,12 +214,20 @@ export default function Marketplace() {
               Descubre materiales reutilizables en tu comunidad
             </p>
           </div>
-          <Button asChild>
-            <Link to="/app/publicar">
-              <Plus className="mr-2 h-4 w-4" />
-              Publicar material
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/app/mapa">
+                <Map className="mr-2 h-4 w-4" />
+                Ver mapa
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link to="/app/publicar">
+                <Plus className="mr-2 h-4 w-4" />
+                Publicar material
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -191,7 +286,13 @@ export default function Marketplace() {
         ) : filteredMaterials.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredMaterials.map((material) => (
-              <MaterialCard key={material.id} material={material} />
+              <MaterialCard 
+                key={material.id} 
+                material={{
+                  ...material,
+                  image: material.image || `/src/assets/circulapp/${material.type}.jpg`
+                }} 
+              />
             ))}
           </div>
         ) : (

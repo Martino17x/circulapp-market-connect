@@ -40,37 +40,44 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 const navigationItems = [
   {
     title: "Inicio",
     url: "/app",
     icon: Home,
-    description: "Vista general del marketplace"
+    description: "Vista general del marketplace",
+    mobileOrder: 1
   },
   {
-    title: "Publicar material",
+    title: "Marketplace",
+    url: "/app/marketplace",
+    icon: Search,
+    description: "Explorar materiales",
+    mobileOrder: 2
+  },
+  {
+    title: "Publicar",
     url: "/app/publicar",
     icon: Plus,
-    description: "Añadir nuevos materiales"
-  },
-  {
-    title: "Buscar materiales",
-    url: "/app/buscar",
-    icon: Search,
-    description: "Explorar el catálogo"
+    description: "Añadir nuevos materiales",
+    mobileOrder: 3,
+    highlight: true
   },
   {
     title: "Mapa",
     url: "/app/mapa",
     icon: Map,
-    description: "Ver ubicaciones"
+    description: "Ver ubicaciones",
+    mobileOrder: 4
   },
   {
     title: "Chat",
     url: "/app/chat",
     icon: MessageCircle,
-    description: "Conversaciones"
+    description: "Conversaciones",
+    mobileOrder: 5
   },
   {
     title: "Recolección",
@@ -205,20 +212,96 @@ function LogoutButton({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+function BottomNavigation() {
+  const location = useLocation();
+  const currentPath = location.pathname;
+  
+  const mobileItems = navigationItems
+    .filter(item => item.mobileOrder)
+    .sort((a, b) => (a.mobileOrder || 0) - (b.mobileOrder || 0));
+
+  const isActive = (path: string) => currentPath === path || (path === "/app" && currentPath === "/app/");
+
+  return (
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
+      <div className="flex items-center justify-around px-2 py-2">
+        {mobileItems.map((item) => (
+          <NavLink
+            key={item.title}
+            to={item.url}
+            className={cn(
+              "flex flex-col items-center gap-1 px-3 py-2 text-xs transition-colors rounded-lg",
+              isActive(item.url)
+                ? "text-primary bg-primary/10"
+                : "text-muted-foreground hover:text-foreground",
+              item.highlight && !isActive(item.url) && "text-primary"
+            )}
+          >
+            <item.icon className={cn(
+              "h-5 w-5", 
+              item.highlight && !isActive(item.url) && "text-primary"
+            )} />
+            <span className="font-medium">{item.title}</span>
+          </NavLink>
+        ))}
+        <NavLink
+          to="/app/perfil"
+          className={cn(
+            "flex flex-col items-center gap-1 px-3 py-2 text-xs transition-colors rounded-lg",
+            isActive("/app/perfil")
+              ? "text-primary bg-primary/10"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <User className="h-5 w-5" />
+          <span className="font-medium">Perfil</span>
+        </NavLink>
+      </div>
+    </nav>
+  );
+}
+
 function TopBar() {
   const isMobile = useIsMobile();
   const { user, signOut } = useAuth();
+  const location = useLocation();
+  
+  const getPageTitle = () => {
+    const path = location.pathname;
+    switch (path) {
+      case '/app':
+        return 'Dashboard';
+      case '/app/marketplace':
+        return 'Marketplace';
+      case '/app/publicar':
+        return 'Publicar Material';
+      case '/app/mapa':
+        return 'Mapa';
+      case '/app/chat':
+        return 'Chat';
+      case '/app/recoleccion':
+        return 'Recolección';
+      case '/app/perfil':
+        return 'Mi Perfil';
+      case '/app/denuncias':
+        return 'Denuncias';
+      default:
+        return 'Circulapp';
+    }
+  };
   
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-background px-4 lg:px-6">
       <div className="flex items-center gap-4">
         <SidebarTrigger className="lg:hidden" />
-        {!isMobile && (
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">Panel de control</h1>
+        <div>
+          <h1 className="text-lg font-semibold text-foreground">
+            {isMobile ? getPageTitle() : 'Panel de control'}
+          </h1>
+          {!isMobile && (
             <p className="text-sm text-muted-foreground">Gestiona tu actividad en Circulapp</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
@@ -272,6 +355,8 @@ function TopBar() {
 }
 
 export default function AppLayout() {
+  const isMobile = useIsMobile();
+  
   return (
     <SidebarProvider defaultOpen>
       <div className="flex min-h-screen w-full bg-background">
@@ -280,11 +365,16 @@ export default function AppLayout() {
         <div className="flex flex-1 flex-col overflow-hidden">
           <TopBar />
           
-          <main className="flex-1 overflow-auto p-4 lg:p-6">
+          <main className={cn(
+            "flex-1 overflow-auto p-4 lg:p-6",
+            isMobile && "pb-20" // Add padding bottom for mobile bottom nav
+          )}>
             <div className="animate-fade-in">
               <Outlet />
             </div>
           </main>
+          
+          <BottomNavigation />
         </div>
       </div>
     </SidebarProvider>
