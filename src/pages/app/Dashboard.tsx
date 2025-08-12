@@ -1,77 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, TrendingUp, Users, Recycle, MapPin } from "lucide-react";
+import { Plus, TrendingUp, Users, Recycle, MapPin, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock data para el dashboard
-const stats = [
-  {
-    title: "Materiales publicados",
-    value: "12",
-    description: "En los últimos 30 días",
-    icon: Plus,
-    trend: "+15%"
-  },
-  {
-    title: "Materiales reutilizados",
-    value: "8",
-    description: "Impacto positivo",
-    icon: Recycle,
-    trend: "+25%"
-  },
-  {
-    title: "Conexiones activas",
-    value: "24",
-    description: "Vecinos colaborando",
-    icon: Users,
-    trend: "+12%"
-  },
-  {
-    title: "Radio de acción",
-    value: "3.2 km",
-    description: "Alcance promedio",
-    icon: MapPin,
-    trend: "+5%"
-  }
-];
+interface DashboardStats {
+  title: string;
+  value: string;
+  description: string;
+  icon: any;
+  trend: string;
+}
 
-const recentActivities = [
-  {
-    id: 1,
-    type: "material_added",
-    title: "Publicaste cartón",
-    description: "25kg de cartón corrugado",
-    time: "Hace 2 horas",
-    status: "active"
-  },
-  {
-    id: 2,
-    type: "material_requested",
-    title: "Solicitud de Luis",
-    description: "Interesado en tu plástico PET",
-    time: "Hace 4 horas",
-    status: "pending"
-  },
-  {
-    id: 3,
-    type: "material_collected",
-    title: "Material recolectado",
-    description: "Vidrio entregado a María",
-    time: "Ayer",
-    status: "completed"
-  },
-  {
-    id: 4,
-    type: "chat_message",
-    title: "Nuevo mensaje",
-    description: "Pedro pregunta sobre disponibilidad",
-    time: "Ayer",
-    status: "active"
-  }
-];
+interface RecentActivity {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  time: string;
+  status: string;
+}
 
 const setMeta = (name: string, content: string) => {
   let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -85,6 +36,9 @@ const setMeta = (name: string, content: string) => {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [stats, setStats] = useState<DashboardStats[]>([]);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [loading, setLoading] = useState(true);
   
   // Extract user name from user metadata or email
   const getUserName = () => {
@@ -100,13 +54,98 @@ export default function Dashboard() {
     return 'Usuario';
   };
 
+  const fetchDashboardData = async () => {
+    if (!user) return;
+    
+    try {
+      // Fetch user's materials count
+      const { data: userMaterials, error: materialsError } = await supabase
+        .from('materials')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (materialsError) throw materialsError;
+
+      // Fetch total materials count for connections metric
+      const { data: allMaterials, error: allMaterialsError } = await supabase
+        .from('materials')
+        .select('id');
+
+      if (allMaterialsError) throw allMaterialsError;
+
+      // Calculate stats
+      const publishedCount = userMaterials?.length || 0;
+      const soldCount = userMaterials?.filter(m => m.status === 'sold')?.length || 0;
+      const reusedCount = userMaterials?.filter(m => m.status === 'completed')?.length || 0;
+      const connectionsCount = allMaterials?.length || 0;
+
+      const dashboardStats: DashboardStats[] = [
+        {
+          title: "Artículos publicados",
+          value: publishedCount.toString(),
+          description: "Total de publicaciones",
+          icon: Plus,
+          trend: "+0%"
+        },
+        {
+          title: "Artículos vendidos",
+          value: soldCount.toString(),
+          description: "Transacciones exitosas",
+          icon: ShoppingCart,
+          trend: "+0%"
+        },
+        {
+          title: "Reutilizados",
+          value: reusedCount.toString(),
+          description: "Impacto positivo",
+          icon: Recycle,
+          trend: "+0%"
+        },
+        {
+          title: "Conexiones activas",
+          value: connectionsCount.toString(),
+          description: "Total en la plataforma",
+          icon: Users,
+          trend: "+0%"
+        }
+      ];
+
+      setStats(dashboardStats);
+
+      // Create recent activities from user's materials
+      const activities: RecentActivity[] = userMaterials?.slice(0, 4).map((material, index) => ({
+        id: material.id,
+        type: "material_added",
+        title: `Publicaste: ${material.title}`,
+        description: `${material.material_type} - ${material.weight_kg}kg`,
+        time: new Date(material.created_at).toLocaleDateString('es-ES', {
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        status: material.status || 'active'
+      })) || [];
+
+      setRecentActivities(activities);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     document.title = "Inicio | Circulapp";
     setMeta(
       "description",
       "Panel de control de Circulapp: gestiona tus materiales, conexiones y actividad en la economía circular."
     );
-  }, []);
+    
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
 
   return (
     <div className="space-y-6">
@@ -128,7 +167,7 @@ export default function Dashboard() {
             <Button asChild>
               <Link to="/app/publicar">
                 <Plus className="mr-2 h-4 w-4" />
-                Publicar material
+                Publicar artículo
               </Link>
             </Button>
           </div>
@@ -138,28 +177,43 @@ export default function Dashboard() {
       {/* Estadísticas */}
       <section>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <Card key={stat.title} className="relative overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    {stat.description}
-                  </p>
-                  <Badge variant="secondary" className="text-xs">
-                    <TrendingUp className="mr-1 h-3 w-3" />
-                    {stat.trend}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {loading ? (
+            Array.from({ length: 4 }).map((_, index) => (
+              <Card key={index} className="relative overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-4 bg-muted animate-pulse rounded" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-8 w-16 bg-muted animate-pulse rounded mb-2" />
+                  <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            stats.map((stat) => (
+              <Card key={stat.title} className="relative overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {stat.title}
+                  </CardTitle>
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      {stat.description}
+                    </p>
+                    <Badge variant="secondary" className="text-xs">
+                      <TrendingUp className="mr-1 h-3 w-3" />
+                      {stat.trend}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </section>
 
@@ -174,35 +228,56 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className={`h-2 w-2 rounded-full mt-2 flex-shrink-0 ${
-                    activity.status === 'active' ? 'bg-primary' :
-                    activity.status === 'pending' ? 'bg-accent' : 'bg-muted-foreground'
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium leading-none mb-1">
-                      {activity.title}
-                    </p>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {activity.description}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {activity.time}
-                    </p>
+              {loading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="flex items-start gap-4 p-3 rounded-lg">
+                    <div className="h-2 w-2 rounded-full mt-2 bg-muted animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                      <div className="h-3 w-48 bg-muted animate-pulse rounded" />
+                      <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+                    </div>
                   </div>
-                  <Badge 
-                    variant={
-                      activity.status === 'active' ? 'default' :
-                      activity.status === 'pending' ? 'secondary' : 'outline'
-                    }
-                    className="text-xs"
-                  >
-                    {activity.status === 'active' ? 'Activo' :
-                     activity.status === 'pending' ? 'Pendiente' : 'Completado'}
-                  </Badge>
+                ))
+              ) : recentActivities.length > 0 ? (
+                recentActivities.map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className={`h-2 w-2 rounded-full mt-2 flex-shrink-0 ${
+                      activity.status === 'active' ? 'bg-primary' :
+                      activity.status === 'pending' ? 'bg-accent' : 
+                      activity.status === 'sold' ? 'bg-green-500' : 'bg-muted-foreground'
+                    }`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium leading-none mb-1">
+                        {activity.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        {activity.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {activity.time}
+                      </p>
+                    </div>
+                    <Badge 
+                      variant={
+                        activity.status === 'active' ? 'default' :
+                        activity.status === 'pending' ? 'secondary' : 
+                        activity.status === 'sold' ? 'default' : 'outline'
+                      }
+                      className="text-xs"
+                    >
+                      {activity.status === 'active' ? 'Activo' :
+                       activity.status === 'pending' ? 'Pendiente' : 
+                       activity.status === 'sold' ? 'Vendido' : 'Completado'}
+                    </Badge>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No hay actividad reciente</p>
+                  <p className="text-xs mt-1">Comienza publicando tu primer artículo</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
