@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      materials: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          latitude: number | null
+          location_name: string
+          longitude: number | null
+          material_type: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          weight_kg: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          location_name: string
+          longitude?: number | null
+          material_type: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          weight_kg: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          location_name?: string
+          longitude?: number | null
+          material_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -52,7 +100,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_stats: {
+        Row: {
+          active_posts: number | null
+          completed_posts: number | null
+          last_post_date: string | null
+          most_frequent_type: string | null
+          total_posts: number | null
+          total_weight_kg: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_public_profile: {
