@@ -3,11 +3,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Link, Navigate } from "react-router-dom";
-import { Leaf, Mail, Lock, User } from "lucide-react";
+import { Leaf, Mail, Lock, User, ArrowLeft, CheckCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import signinIllustration from "@/assets/circulapp/signin-illustration.jpg";
+import googleLogo from "@/assets/brands/google.svg";
+import facebookLogo from "@/assets/brands/facebook.svg";
 
 const setMeta = (name: string, content: string) => {
   let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -37,6 +39,8 @@ export default function Auth() {
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentView, setCurrentView] = useState<'signin' | 'signup' | 'forgot'>('signin');
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   useEffect(() => {
     document.title = "Acceder | Circulapp";
@@ -101,8 +105,56 @@ export default function Auth() {
         title: "¡Cuenta creada!",
         description: "Revisa tu email para verificar tu cuenta y luego inicia sesión",
       });
+      setCurrentView('signin');
     }
     setIsLoading(false);
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Por favor ingresa tu email",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Hubo un problema al enviar el email de recuperación",
+      });
+    } else {
+      setResetEmailSent(true);
+    }
+    setIsLoading(false);
+  };
+
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    setIsLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/app`,
+      },
+    });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `No se pudo iniciar sesión con ${provider === 'google' ? 'Google' : 'Facebook'}`,
+      });
+      setIsLoading(false);
+    }
   };
 
   if (loading) {
@@ -127,19 +179,35 @@ export default function Auth() {
               </div>
               <span className="text-xl font-semibold">Circulapp</span>
             </Link>
-            <h1 className="text-2xl font-semibold tracking-tight">Bienvenido/a</h1>
-            <p className="text-sm text-muted-foreground">
-              Únete a la comunidad. Reutiliza, colabora y comparte.
-            </p>
+            {currentView === 'signin' && (
+              <>
+                <h1 className="text-2xl font-semibold tracking-tight">¡Bienvenido/a de vuelta!</h1>
+                <p className="text-sm text-muted-foreground">
+                  Ingresa a tu cuenta para continuar colaborando en la economía circular.
+                </p>
+              </>
+            )}
+            {currentView === 'signup' && (
+              <>
+                <h1 className="text-2xl font-semibold tracking-tight">Únete a Circulapp</h1>
+                <p className="text-sm text-muted-foreground">
+                  Crea tu cuenta y comienza a compartir materiales con tu comunidad.
+                </p>
+              </>
+            )}
+            {currentView === 'forgot' && (
+              <>
+                <h1 className="text-2xl font-semibold tracking-tight">Recuperar contraseña</h1>
+                <p className="text-sm text-muted-foreground">
+                  Te enviaremos un enlace para restablecer tu contraseña.
+                </p>
+              </>
+            )}
           </header>
 
-          <Tabs defaultValue="signin" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Iniciar sesión</TabsTrigger>
-              <TabsTrigger value="signup">Registrarse</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin" className="space-y-4">
+          {/* Vista de inicio de sesión */}
+          {currentView === 'signin' && (
+            <div className="space-y-4">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
@@ -158,7 +226,16 @@ export default function Auth() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Contraseña</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Contraseña</Label>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentView('forgot')}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </button>
+                  </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input 
@@ -177,9 +254,57 @@ export default function Auth() {
                   {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
                 </Button>
               </form>
-            </TabsContent>
 
-            <TabsContent value="signup" className="space-y-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-muted"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">También podés iniciar sesión con tus redes sociales</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleSocialLogin('google')}
+                  disabled={isLoading}
+                >
+                  <img src={googleLogo} alt="Google" className="h-5 w-5" loading="lazy" />
+                  Google
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleSocialLogin('facebook')}
+                  disabled={isLoading}
+                >
+                  <img src={facebookLogo} alt="Facebook" className="h-5 w-5" loading="lazy" />
+                  Facebook
+                </Button>
+              </div>
+
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  ¿No tenés cuenta?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentView('signup')}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Registrate aquí
+                  </button>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Vista de registro */}
+          {currentView === 'signup' && (
+            <div className="space-y-4">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-fullname">Nombre completo *</Label>
@@ -257,8 +382,108 @@ export default function Auth() {
                   Al registrarte aceptas nuestras políticas comunitarias y de uso responsable.
                 </p>
               </form>
-            </TabsContent>
-          </Tabs>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-muted"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">También podés registrarte con tus redes sociales</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleSocialLogin('google')}
+                  disabled={isLoading}
+                >
+                  <img src={googleLogo} alt="Google" className="h-5 w-5" loading="lazy" />
+                  Google
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleSocialLogin('facebook')}
+                  disabled={isLoading}
+                >
+                  <img src={facebookLogo} alt="Facebook" className="h-5 w-5" loading="lazy" />
+                  Facebook
+                </Button>
+              </div>
+
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  ¿Ya tenés cuenta?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentView('signin')}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Inicia sesión aquí
+                  </button>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Vista de recuperación de contraseña */}
+          {currentView === 'forgot' && (
+            <div className="space-y-4">
+              {!resetEmailSent ? (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="forgot-email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Input 
+                        id="forgot-email"
+                        type="email" 
+                        placeholder="tu@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Enviando..." : "Enviar enlace de recuperación"}
+                  </Button>
+                </form>
+              ) : (
+                <div className="text-center space-y-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">¡Email enviado!</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Si tu email está registrado, te enviaremos un enlace para restablecer tu contraseña.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentView('signin');
+                    setResetEmailSent(false);
+                  }}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Volver a iniciar sesión
+                </button>
+              </div>
+            </div>
+          )}
         </article>
       </main>
 
