@@ -12,6 +12,7 @@ export type Material = {
   distanceKm: number;
   image: string;
   userName: string;
+  status?: string;
 };
 
 interface Props {

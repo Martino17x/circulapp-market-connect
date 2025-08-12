@@ -100,18 +100,7 @@ export type Database = {
       }
     }
     Views: {
-      user_stats: {
-        Row: {
-          active_posts: number | null
-          completed_posts: number | null
-          last_post_date: string | null
-          most_frequent_type: string | null
-          total_posts: number | null
-          total_weight_kg: number | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       get_public_profile: {
@@ -121,6 +110,18 @@ export type Database = {
           user_id: string
           username: string
           created_at: string
+        }[]
+      }
+      get_user_stats: {
+        Args: { target_user_id: string }
+        Returns: {
+          user_id: string
+          total_posts: number
+          total_weight_kg: number
+          active_posts: number
+          completed_posts: number
+          last_post_date: string
+          most_frequent_type: string
         }[]
       }
     }

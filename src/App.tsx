@@ -13,6 +13,9 @@ import Dashboard from "./pages/app/Dashboard";
 import ComingSoon from "./pages/app/ComingSoon";
 import Profile from "./pages/app/Profile";
 import MapPage from "./pages/app/MapPage";
+import Marketplace from "./pages/app/Marketplace";
+import PublishMaterial from "./pages/app/PublishMaterial";
+import UserProfile from "./pages/app/UserProfile";
 
 const queryClient = new QueryClient();
 
@@ -35,12 +38,13 @@ const App = () => (
               </ProtectedRoute>
             }>
               <Route index element={<Dashboard />} />
-              <Route path="publicar" element={<ComingSoon />} />
-              <Route path="buscar" element={<ComingSoon />} />
+              <Route path="marketplace" element={<Marketplace />} />
+              <Route path="publicar" element={<PublishMaterial />} />
+              <Route path="buscar" element={<Marketplace />} />
               <Route path="mapa" element={<MapPage />} />
               <Route path="chat" element={<ComingSoon />} />
               <Route path="recoleccion" element={<ComingSoon />} />
-              <Route path="perfil" element={<Profile />} />
+              <Route path="perfil" element={<UserProfile />} />
               <Route path="denuncias" element={<ComingSoon />} />
             </Route>
             

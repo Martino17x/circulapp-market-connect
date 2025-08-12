@@ -119,12 +119,19 @@ export default function Dashboard() {
               Tu impacto en la economía circular está creciendo. Aquí está tu actividad reciente.
             </p>
           </div>
-          <Button asChild className="w-fit">
-            <Link to="/app/publicar">
-              <Plus className="mr-2 h-4 w-4" />
-              Publicar material
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link to="/app/marketplace">
+                Ver Marketplace
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link to="/app/publicar">
+                <Plus className="mr-2 h-4 w-4" />
+                Publicar material
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -213,7 +220,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <Button variant="outline" asChild className="h-auto p-4 justify-start">
-                <Link to="/app/buscar">
+                <Link to="/app/marketplace">
                   <div className="text-left">
                     <div className="font-medium">Explorar materiales</div>
                     <div className="text-xs text-muted-foreground">Buscar en tu zona</div>
