@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Scale, User, MessageCircle, Eye } from "lucide-react";
+import { MapPin, Scale, User, MessageCircle, Eye, DollarSign } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
@@ -14,6 +14,9 @@ export type Material = {
   image: string;
   userName: string;
   status?: string;
+  title?: string;
+  price?: number;
+  isFree?: boolean;
 };
 
 interface Props {
@@ -34,14 +37,38 @@ const MaterialCard = ({ material }: Props) => {
         </div>
         <CardContent className="space-y-3 p-4">
           <div className="flex items-start justify-between gap-2">
-            <div>
-              <h3 className="text-base font-semibold leading-tight">{material.type}</h3>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><Scale className="size-4" />{material.weightKg} kg</span>
-                <span className="inline-flex items-center gap-1"><MapPin className="size-4" />{material.locationName} · {material.distanceKm.toFixed(1)} km</span>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold leading-tight">{material.title || material.type}</h3>
+              <p className="text-sm text-muted-foreground capitalize">{material.type}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <Scale className="size-4" />
+                  {material.weightKg} kg
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="size-4" />
+                  {material.locationName}
+                </span>
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <div className="inline-flex items-center gap-1 text-sm font-medium">
+                  {material.isFree ? (
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      Gratuito
+                    </Badge>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-primary">
+                      <DollarSign className="size-4" />
+                      ${material.price || 0}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {material.distanceKm.toFixed(1)} km
+                </span>
               </div>
             </div>
-            <Badge variant="secondary">{material.userName}</Badge>
+            <Badge variant="outline" className="text-xs">{material.userName}</Badge>
           </div>
 
           <div className="flex items-center gap-2 pt-2">

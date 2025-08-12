@@ -20,10 +20,12 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          is_free: boolean | null
           latitude: number | null
           location_name: string
           longitude: number | null
           material_type: string
+          price: number | null
           status: string
           title: string
           updated_at: string
@@ -35,10 +37,12 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          is_free?: boolean | null
           latitude?: number | null
           location_name: string
           longitude?: number | null
           material_type: string
+          price?: number | null
           status?: string
           title: string
           updated_at?: string
@@ -50,10 +54,12 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          is_free?: boolean | null
           latitude?: number | null
           location_name?: string
           longitude?: number | null
           material_type?: string
+          price?: number | null
           status?: string
           title?: string
           updated_at?: string
