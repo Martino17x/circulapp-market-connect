@@ -1,5 +1,4 @@
 import BrandHeader from "@/components/circulapp/BrandHeader";
-import SearchFilters, { FilterValues } from "@/components/circulapp/SearchFilters";
 import MaterialCard, { Material } from "@/components/circulapp/MaterialCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,8 +6,11 @@ import { Plus, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import SearchFilters, { FilterValues } from "@/components/circulapp/SearchFilters";
 
+// Helper to set meta tags
 const setMeta = (name: string, content: string) => {
   let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
   if (!tag) {
@@ -20,18 +22,51 @@ const setMeta = (name: string, content: string) => {
 };
 
 const Index = () => {
+  const { user } = useAuth();
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userHasPublished, setUserHasPublished] = useState(false);
+  const [checkingPublishStatus, setCheckingPublishStatus] = useState(true);
+  // State for filters is kept for display purposes, but logic is disconnected.
   const [filters, setFilters] = useState<FilterValues>({ q: "", category: "todos", maxDistance: 10, minWeight: 0 });
 
   useEffect(() => {
-    document.title = "Circulapp - Marketplace de Materiales Reutilizables";
+    document.title = "Circulapp - Marketplace Comunitario";
     setMeta(
       "description",
-      "Encuentra y comparte materiales reutilizables en tu comunidad. Plástico, cartón, vidrio y más para proyectos de economía circular."
+      "Dale una segunda vida a todo. Conecta con tu comunidad para intercambiar desde electrodomésticos y muebles hasta materiales como plástico, cartón y vidrio. Únete a la economía circular"
     );
     fetchMaterials();
   }, []);
+
+  useEffect(() => {
+    const checkUserPublications = async () => {
+      if (!user) {
+        setCheckingPublishStatus(false);
+        return;
+      }
+      try {
+        setCheckingPublishStatus(true);
+        const { data, error } = await supabase
+          .from('materials')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1);
+
+        if (error) {
+          console.error("Error checking user publications:", error);
+        } else {
+          setUserHasPublished(data && data.length > 0);
+        }
+      } catch (error) {
+        console.error("Unexpected error checking publications:", error);
+      } finally {
+        setCheckingPublishStatus(false);
+      }
+    };
+
+    checkUserPublications();
+  }, [user]);
 
   const fetchMaterials = async () => {
     try {
@@ -66,42 +101,39 @@ const Index = () => {
 
       if (!data || data.length === 0) {
         setMaterials([]);
-        return;
+      } else {
+        const userIds = [...new Set(data.map(item => item.user_id))];
+        const { data: profiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_id, username, full_name')
+          .in('user_id', userIds);
+
+        if (profileError) {
+          console.error('Error fetching profiles:', profileError);
+        }
+
+        const profileMap = profiles?.reduce((acc, profile) => {
+          acc[profile.user_id] = profile;
+          return acc;
+        }, {} as Record<string, any>) || {};
+
+        const formattedMaterials: Material[] = data.map(item => {
+          const profile = profileMap[item.user_id];
+          return {
+            id: item.id,
+            type: item.material_type,
+            weightKg: Number(item.weight_kg),
+            locationName: item.location_name,
+            distanceKm: Math.random() * 5 + 0.5, // TODO: Calculate real distance
+            image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
+            userName: profile?.full_name || profile?.username || 'Usuario Anónimo',
+            title: item.title,
+            price: item.is_free ? 0 : Number(item.price || 0),
+            isFree: item.is_free || false
+          };
+        });
+        setMaterials(formattedMaterials);
       }
-
-      // Fetch user profiles for each material
-      const userIds = [...new Set(data.map(item => item.user_id))];
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id, username, full_name')
-        .in('user_id', userIds);
-
-      if (profileError) {
-        console.error('Error fetching profiles:', profileError);
-      }
-
-      const profileMap = profiles?.reduce((acc, profile) => {
-        acc[profile.user_id] = profile;
-        return acc;
-      }, {} as Record<string, any>) || {};
-
-      const formattedMaterials: Material[] = data.map(item => {
-        const profile = profileMap[item.user_id];
-        return {
-          id: item.id,
-          type: item.material_type,
-          weightKg: Number(item.weight_kg),
-          locationName: item.location_name,
-          distanceKm: Math.random() * 5 + 0.5, // TODO: Calculate real distance
-          image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
-          userName: profile?.full_name || profile?.username || 'Usuario Anónimo',
-          title: item.title,
-          price: item.is_free ? 0 : Number(item.price || 0),
-          isFree: item.is_free || false
-        };
-      });
-
-      setMaterials(formattedMaterials);
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
@@ -114,24 +146,17 @@ const Index = () => {
     }
   };
 
-  const filtered = useMemo(() => {
-    const q = filters.q.trim().toLowerCase();
-    return materials.filter((m) => {
-      const matchText = q === "" || 
-        m.type.toLowerCase().includes(q) || 
-        m.userName.toLowerCase().includes(q) ||
-        (m.title && m.title.toLowerCase().includes(q));
-      const matchCat = filters.category === "todos" || m.type === filters.category;
-      const matchDist = m.distanceKm <= filters.maxDistance;
-      const matchWeight = m.weightKg >= filters.minWeight;
-      return matchText && matchCat && matchDist && matchWeight;
-    });
-  }, [materials, filters]);
+  const getPublishButtonText = () => {
+    if (!user) return "Publicar Artículo";
+    if (checkingPublishStatus) return "Cargando...";
+    if (userHasPublished) return "Publicar Otro Artículo";
+    return "Publicar tu Primer Artículo";
+  };
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    itemListElement: filtered.map((m, idx) => ({
+    itemListElement: materials.map((m, idx) => ({
       "@type": "Product",
       position: idx + 1,
       name: m.type,
@@ -160,21 +185,21 @@ const Index = () => {
               Circulapp: Marketplace de materiales reutilizables
             </h1>
             <p className="mx-auto mt-3 max-w-2xl text-base md:text-lg opacity-90">
-              Publica, encuentra y reutiliza materiales de tu barrio. Simple, accesible y colaborativo.
+              Publica, encuentra y reutiliza materiales, productos y articulos. Simple, accesible y colaborativo.
             </p>
           </div>
         </section>
 
-        {/* Search + filters */}
-        <SearchFilters onChange={setFilters} />
+        {/* Search + filters (visual only) */}
+        <SearchFilters onChange={() => {}} />
 
         {/* Publish Button */}
-        <section className="container mx-auto mb-6">
+        <section className="container mx-auto my-6">
           <div className="flex justify-center">
-            <Button size="lg" asChild className="shadow-elegant">
+            <Button size="lg" asChild className="shadow-elegant" disabled={checkingPublishStatus}>
               <Link to="/app/publicar">
                 <Plus className="mr-2 h-5 w-5" />
-                Publicar Artículo
+                {getPublishButtonText()}
               </Link>
             </Button>
           </div>
@@ -185,7 +210,7 @@ const Index = () => {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <span>
-                {loading ? "Cargando..." : `${filtered.length} material${filtered.length !== 1 ? "es" : ""} disponible${filtered.length !== 1 ? "s" : ""}`}
+                {loading ? "Cargando..." : `${materials.length} material${materials.length !== 1 ? "es" : ""} disponible${materials.length !== 1 ? "s" : ""}`}
               </span>
               {!loading && (
                 <>
@@ -218,9 +243,9 @@ const Index = () => {
                 </div>
               ))}
             </div>
-          ) : filtered.length > 0 ? (
+          ) : materials.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in">
-              {filtered.map((m) => (
+              {materials.map((m) => (
                 <MaterialCard key={m.id} material={m} />
               ))}
             </div>
