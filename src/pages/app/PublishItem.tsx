@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
-interface MaterialForm {
+interface ItemForm {
   title: string;
   description: string;
   material_type: string;
@@ -23,7 +23,7 @@ interface MaterialForm {
   is_free: boolean;
 }
 
-const materialTypes = [
+const itemTypes = [
   { value: "plastico", label: "Plástico" },
   { value: "carton", label: "Cartón" },
   { value: "vidrio", label: "Vidrio" },
@@ -46,7 +46,7 @@ const setMeta = (name: string, content: string) => {
   tag.setAttribute("content", content);
 };
 
-export default function PublishMaterial() {
+export default function PublishItem() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,7 +59,7 @@ export default function PublishMaterial() {
     setValue,
     watch,
     formState: { errors }
-  } = useForm<MaterialForm>({
+  } = useForm<ItemForm>({
     defaultValues: {
       is_free: false,
       price: 0
@@ -70,10 +70,10 @@ export default function PublishMaterial() {
   const isFree = watch("is_free");
 
   useEffect(() => {
-    document.title = "Publicar Material | Circulapp";
+    document.title = "Publicar Ítem | Circulapp";
     setMeta(
       "description",
-      "Publica materiales reutilizables en tu comunidad y contribuye a la economía circular."
+      "Publica ítems reutilizables en tu comunidad y contribuye a la economía circular."
     );
   }, []);
 
@@ -111,11 +111,11 @@ export default function PublishMaterial() {
     setImagePreviews(newPreviews);
   };
 
-  const onSubmit = async (data: MaterialForm) => {
+  const onSubmit = async (data: ItemForm) => {
     if (!user) {
       toast({
         title: "Error",
-        description: "Debes estar autenticado para publicar materiales",
+        description: "Debes estar autenticado para publicar ítems",
         variant: "destructive"
       });
       return;
@@ -132,8 +132,8 @@ export default function PublishMaterial() {
         imageUrl = `/src/assets/circulapp/${selectedType}.jpg`;
       }
 
-      const { data: materialData, error } = await supabase
-        .from('materials')
+      const { data: itemData, error } = await supabase
+        .from('items')
         .insert({
           user_id: user.id,
           title: data.title,
@@ -153,15 +153,15 @@ export default function PublishMaterial() {
       }
 
       toast({
-        title: "¡Material publicado!",
-        description: "Tu material ha sido publicado exitosamente en el marketplace."
+        title: "¡Ítem publicado!",
+        description: "Tu ítem ha sido publicado exitosamente en el marketplace."
       });
 
       navigate("/");
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "No se pudo publicar el material",
+        description: error.message || "No se pudo publicar el ítem",
         variant: "destructive"
       });
     } finally {
@@ -174,9 +174,9 @@ export default function PublishMaterial() {
       {/* Header */}
       <section>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Publicar Material</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Publicar Ítem</h1>
           <p className="text-muted-foreground">
-            Comparte materiales reutilizables con tu comunidad
+            Comparte ítems reutilizables con tu comunidad
           </p>
         </div>
       </section>
@@ -185,9 +185,9 @@ export default function PublishMaterial() {
       <section>
         <Card className="max-w-2xl">
           <CardHeader>
-            <CardTitle>Información del Material</CardTitle>
+            <CardTitle>Información del Ítem</CardTitle>
             <CardDescription>
-              Completa los detalles para que otros usuarios puedan encontrar tu material
+              Completa los detalles para que otros usuarios puedan encontrar tu ítem
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -218,7 +218,7 @@ export default function PublishMaterial() {
                     }}
                   />
                   <Label htmlFor="is_free" className="text-sm font-normal">
-                    Material gratuito
+                    Ítem gratuito
                   </Label>
                 </div>
                 
@@ -272,10 +272,10 @@ export default function PublishMaterial() {
                 <Label htmlFor="material_type">Categoría *</Label>
                 <Select onValueChange={(value) => setValue("material_type", value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona la categoría del material" />
+                    <SelectValue placeholder="Selecciona la categoría del ítem" />
                   </SelectTrigger>
                   <SelectContent>
-                    {materialTypes.map((type) => (
+                    {itemTypes.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         {type.label}
                       </SelectItem>
@@ -309,7 +309,7 @@ export default function PublishMaterial() {
                 <Label htmlFor="description">Descripción *</Label>
                 <Textarea
                   id="description"
-                  placeholder="Describe el estado del material, condiciones de retiro, etc."
+                  placeholder="Describe el estado del ítem, condiciones de retiro, etc."
                   rows={4}
                   {...register("description", { required: "La descripción es obligatoria" })}
                 />
@@ -396,7 +396,7 @@ export default function PublishMaterial() {
                   className="flex-1"
                   disabled={isSubmitting || selectedImages.length === 0}
                 >
-                  {isSubmitting ? "Publicando..." : "Publicar Material"}
+                  {isSubmitting ? "Publicando..." : "Publicar Ítem"}
                 </Button>
               </div>
             </form>

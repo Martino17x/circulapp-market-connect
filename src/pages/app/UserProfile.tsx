@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, TrendingUp, Package, Calendar, Settings, Edit3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import MaterialCard, { Material } from "@/components/circulapp/MaterialCard";
+import ItemCard, { Item } from "@/components/circulapp/ItemCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 
@@ -32,9 +32,9 @@ const setMeta = (name: string, content: string) => {
 export default function UserProfile() {
   const { user } = useAuth();
   const [userStats, setUserStats] = useState<UserStats | null>(null);
-  const [userMaterials, setUserMaterials] = useState<Material[]>([]);
+  const [userItems, setUserItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-  const [materialsLoading, setMaterialsLoading] = useState(true);
+  const [itemsLoading, setItemsLoading] = useState(true);
 
   const getUserName = () => {
     if (user?.user_metadata?.full_name) {
@@ -58,10 +58,10 @@ export default function UserProfile() {
     document.title = "Mi Perfil | Circulapp";
     setMeta(
       "description",
-      "Gestiona tu perfil, estadísticas y materiales publicados en Circulapp."
+      "Gestiona tu perfil, estadísticas y ítems publicados en Circulapp."
     );
     fetchUserStats();
-    fetchUserMaterials();
+    fetchUserItems();
   }, [user]);
 
   const fetchUserStats = async () => {
@@ -102,13 +102,13 @@ export default function UserProfile() {
     }
   };
 
-  const fetchUserMaterials = async () => {
+  const fetchUserItems = async () => {
     if (!user) return;
 
     try {
-      setMaterialsLoading(true);
+      setItemsLoading(true);
       const { data, error } = await supabase
-        .from('materials')
+        .from('items')
         .select(`
           id,
           title,
@@ -128,12 +128,12 @@ export default function UserProfile() {
 
       if (error) throw error;
 
-      const formattedMaterials: Material[] = data?.map(item => ({
+      const formattedItems: Item[] = data?.map(item => ({
         id: item.id,
         type: item.material_type,
         weightKg: Number(item.weight_kg),
         locationName: item.location_name,
-        distanceKm: 0, // Own materials
+        distanceKm: 0, // Own items
         image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
         userName: getUserName(),
         status: item.status,
@@ -143,20 +143,20 @@ export default function UserProfile() {
         user_id: item.user_id
       })) || [];
 
-      setUserMaterials(formattedMaterials);
+      setUserItems(formattedItems);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudieron cargar tus materiales",
+        description: "No se pudieron cargar tus ítems",
         variant: "destructive"
       });
     } finally {
-      setMaterialsLoading(false);
+      setItemsLoading(false);
     }
   };
 
-  const activeMaterials = userMaterials.filter(m => m.status === 'disponible');
-  const completedMaterials = userMaterials.filter(m => m.status === 'retirado');
+  const activeItems = userItems.filter(m => m.status === 'disponible');
+  const completedItems = userItems.filter(m => m.status === 'retirado');
 
   return (
     <div className="space-y-6">
@@ -207,7 +207,7 @@ export default function UserProfile() {
             <>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Materiales publicados</CardTitle>
+                  <CardTitle className="text-sm font-medium">Ítems publicados</CardTitle>
                   <Package className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -226,7 +226,7 @@ export default function UserProfile() {
                 <CardContent>
                   <div className="text-2xl font-bold">{userStats?.total_weight_kg || 0} kg</div>
                   <p className="text-xs text-muted-foreground">
-                    Material compartido
+                    Ítem compartido
                   </p>
                 </CardContent>
               </Card>
@@ -239,7 +239,7 @@ export default function UserProfile() {
                 <CardContent>
                   <div className="text-2xl font-bold">{userStats?.completed_posts || 0}</div>
                   <p className="text-xs text-muted-foreground">
-                    Materiales entregados
+                    Ítems entregados
                   </p>
                 </CardContent>
               </Card>
@@ -254,7 +254,7 @@ export default function UserProfile() {
                     {userStats?.most_frequent_type || 'N/A'}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Material más publicado
+                    Ítem más publicado
                   </p>
                 </CardContent>
               </Card>
@@ -263,31 +263,31 @@ export default function UserProfile() {
         </div>
       </section>
 
-      {/* Materials Tabs */}
+      {/* Items Tabs */}
       <section>
         <Tabs defaultValue="active" className="space-y-4">
           <TabsList>
             <TabsTrigger value="active">
-              Materiales activos ({activeMaterials.length})
+              Ítems activos ({activeItems.length})
             </TabsTrigger>
             <TabsTrigger value="completed">
-              Completados ({completedMaterials.length})
+              Completados ({completedItems.length})
             </TabsTrigger>
             <TabsTrigger value="all">
-              Todos ({userMaterials.length})
+              Todos ({userItems.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="active">
             <Card>
               <CardHeader>
-                <CardTitle>Materiales disponibles</CardTitle>
+                <CardTitle>Ítems disponibles</CardTitle>
                 <CardDescription>
-                  Materiales que actualmente están disponibles para recolección
+                  Ítems que actualmente están disponibles para recolección
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {materialsLoading ? (
+                {itemsLoading ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className="space-y-3">
@@ -299,22 +299,22 @@ export default function UserProfile() {
                       </div>
                     ))}
                   </div>
-                ) : activeMaterials.length > 0 ? (
+                ) : activeItems.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {activeMaterials.map((material) => (
-                      <MaterialCard key={material.id} material={material} showEditButton={true} />
+                    {activeItems.map((item) => (
+                      <ItemCard key={item.id} item={item} showEditButton={true} />
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-12">
                     <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No tienes materiales activos</h3>
+                    <h3 className="text-lg font-semibold mb-2">No tienes ítems activos</h3>
                     <p className="text-muted-foreground mb-4">
-                      Publica tu primer material para comenzar a participar
+                      Publica tu primer ítem para comenzar a participar
                     </p>
                     <Button>
                       <Edit3 className="mr-2 h-4 w-4" />
-                      Publicar material
+                      Publicar ítem
                     </Button>
                   </div>
                 )}
@@ -325,13 +325,13 @@ export default function UserProfile() {
           <TabsContent value="completed">
             <Card>
               <CardHeader>
-                <CardTitle>Materiales completados</CardTitle>
+                <CardTitle>Ítems completados</CardTitle>
                 <CardDescription>
-                  Historial de materiales que ya fueron recolectados
+                  Historial de ítems que ya fueron recolectados
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {materialsLoading ? (
+                {itemsLoading ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className="space-y-3">
@@ -343,11 +343,11 @@ export default function UserProfile() {
                       </div>
                     ))}
                   </div>
-                ) : completedMaterials.length > 0 ? (
+                ) : completedItems.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {completedMaterials.map((material) => (
-                      <div key={material.id} className="relative">
-                        <MaterialCard material={material} showEditButton={true} />
+                    {completedItems.map((item) => (
+                      <div key={item.id} className="relative">
+                        <ItemCard item={item} showEditButton={true} />
                         <Badge 
                           variant="secondary" 
                           className="absolute top-2 right-2 bg-green-100 text-green-800"
@@ -360,9 +360,9 @@ export default function UserProfile() {
                 ) : (
                   <div className="text-center py-12">
                     <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No tienes materiales completados</h3>
+                    <h3 className="text-lg font-semibold mb-2">No tienes ítems completados</h3>
                     <p className="text-muted-foreground">
-                      Aquí aparecerán los materiales que hayas entregado exitosamente
+                      Aquí aparecerán los ítems que hayas entregado exitosamente
                     </p>
                   </div>
                 )}
@@ -373,13 +373,13 @@ export default function UserProfile() {
           <TabsContent value="all">
             <Card>
               <CardHeader>
-                <CardTitle>Todos los materiales</CardTitle>
+                <CardTitle>Todos los ítems</CardTitle>
                 <CardDescription>
-                  Historial completo de todos tus materiales publicados
+                  Historial completo de todos tus ítems publicados
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {materialsLoading ? (
+                {itemsLoading ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, i) => (
                       <div key={i} className="space-y-3">
@@ -391,12 +391,12 @@ export default function UserProfile() {
                       </div>
                     ))}
                   </div>
-                ) : userMaterials.length > 0 ? (
+                ) : userItems.length > 0 ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {userMaterials.map((material) => (
-                      <div key={material.id} className="relative">
-                        <MaterialCard material={material} showEditButton={true} />
-                        {material.status === 'retirado' && (
+                    {userItems.map((item) => (
+                      <div key={item.id} className="relative">
+                        <ItemCard item={item} showEditButton={true} />
+                        {item.status === 'retirado' && (
                           <Badge 
                             variant="secondary" 
                             className="absolute top-2 right-2 bg-green-100 text-green-800"
@@ -404,7 +404,7 @@ export default function UserProfile() {
                             Completado
                           </Badge>
                         )}
-                        {material.status === 'reservado' && (
+                        {item.status === 'reservado' && (
                           <Badge 
                             variant="secondary" 
                             className="absolute top-2 right-2 bg-yellow-100 text-yellow-800"
@@ -418,13 +418,13 @@ export default function UserProfile() {
                 ) : (
                   <div className="text-center py-12">
                     <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No tienes materiales publicados</h3>
+                    <h3 className="text-lg font-semibold mb-2">No tienes ítems publicados</h3>
                     <p className="text-muted-foreground mb-4">
-                      Comienza a compartir materiales con tu comunidad
+                      Comienza a compartir ítems con tu comunidad
                     </p>
                     <Button>
                       <Edit3 className="mr-2 h-4 w-4" />
-                      Publicar primer material
+                      Publicar primer ítem
                     </Button>
                   </div>
                 )}

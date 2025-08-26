@@ -14,7 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      materials: {
+      items: {
         Row: {
           created_at: string
           description: string | null

@@ -1,5 +1,5 @@
 import BrandHeader from "@/components/circulapp/BrandHeader";
-import MaterialCard, { Material } from "@/components/circulapp/MaterialCard";
+import ItemCard, { Item } from "@/components/circulapp/ItemCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search } from "lucide-react";
@@ -23,7 +23,7 @@ const setMeta = (name: string, content: string) => {
 
 const Index = () => {
   const { user } = useAuth();
-  const [materials, setMaterials] = useState<Material[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [userHasPublished, setUserHasPublished] = useState(false);
   const [checkingPublishStatus, setCheckingPublishStatus] = useState(true);
@@ -34,9 +34,9 @@ const Index = () => {
     document.title = "Circulapp - Marketplace Comunitario";
     setMeta(
       "description",
-      "Dale una segunda vida a todo. Conecta con tu comunidad para intercambiar desde electrodomésticos y muebles hasta materiales como plástico, cartón y vidrio. Únete a la economía circular"
+      "Dale una segunda vida a todo. Conecta con tu comunidad para intercambiar desde electrodomésticos y muebles hasta ítems como plástico, cartón y vidrio. Únete a la economía circular"
     );
-    fetchMaterials();
+    fetchItems();
   }, []);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ const Index = () => {
       try {
         setCheckingPublishStatus(true);
         const { data, error } = await supabase
-          .from('materials')
+          .from('items')
           .select('id')
           .eq('user_id', user.id)
           .limit(1);
@@ -68,11 +68,11 @@ const Index = () => {
     checkUserPublications();
   }, [user]);
 
-  const fetchMaterials = async () => {
+  const fetchItems = async () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('materials')
+        .from('items')
         .select(`
           id,
           title,
@@ -90,17 +90,17 @@ const Index = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching materials:', error);
+        console.error('Error fetching items:', error);
         toast({
           title: "Error",
-          description: "No se pudieron cargar los materiales",
+          description: "No se pudieron cargar los ítems",
           variant: "destructive"
         });
         return;
       }
 
       if (!data || data.length === 0) {
-        setMaterials([]);
+        setItems([]);
       } else {
         const userIds = [...new Set(data.map(item => item.user_id))];
         const { data: profiles, error: profileError } = await supabase
@@ -117,7 +117,7 @@ const Index = () => {
           return acc;
         }, {} as Record<string, any>) || {};
 
-        const formattedMaterials: Material[] = data.map(item => {
+        const formattedItems: Item[] = data.map(item => {
           const profile = profileMap[item.user_id];
           return {
             id: item.id,
@@ -132,13 +132,13 @@ const Index = () => {
             isFree: item.is_free || false
           };
         });
-        setMaterials(formattedMaterials);
+        setItems(formattedItems);
       }
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
         title: "Error",
-        description: "Ocurrió un error al cargar los materiales",
+        description: "Ocurrió un error al cargar los ítems",
         variant: "destructive"
       });
     } finally {
@@ -156,12 +156,12 @@ const Index = () => {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    itemListElement: materials.map((m, idx) => ({
+    itemListElement: items.map((m, idx) => ({
       "@type": "Product",
       position: idx + 1,
       name: m.type,
       brand: "Circulapp",
-      category: "Material reutilizable",
+      category: "Ítem reutilizable",
       image: m.image,
       offers: {
         "@type": "Offer",
@@ -182,10 +182,10 @@ const Index = () => {
         <section className="bg-hero">
           <div className="container mx-auto py-10 text-center text-primary-foreground">
             <h1 className="mx-auto max-w-3xl text-3xl font-extrabold tracking-tight md:text-4xl">
-              Circulapp: Marketplace de materiales reutilizables
+              Circulapp: Marketplace de ítems reutilizables
             </h1>
             <p className="mx-auto mt-3 max-w-2xl text-base md:text-lg opacity-90">
-              Publica, encuentra y reutiliza materiales, productos y articulos. Simple, accesible y colaborativo.
+              Publica, encuentra y reutiliza ítems, productos y articulos. Simple, accesible y colaborativo.
             </p>
           </div>
         </section>
@@ -210,7 +210,7 @@ const Index = () => {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <span>
-                {loading ? "Cargando..." : `${materials.length} material${materials.length !== 1 ? "es" : ""} disponible${materials.length !== 1 ? "s" : ""}`}
+                {loading ? "Cargando..." : `${items.length} ítem${items.length !== 1 ? "s" : ""} disponible${items.length !== 1 ? "s" : ""}`}
               </span>
               {!loading && (
                 <>
@@ -243,10 +243,10 @@ const Index = () => {
                 </div>
               ))}
             </div>
-          ) : materials.length > 0 ? (
+          ) : items.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in">
-              {materials.map((m) => (
-                <MaterialCard key={m.id} material={m} />
+              {items.map((m) => (
+                <ItemCard key={m.id} item={m} />
               ))}
             </div>
           ) : (
@@ -254,9 +254,9 @@ const Index = () => {
               <div className="rounded-full bg-muted p-6 mb-4">
                 <Search className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No hay materiales disponibles</h3>
+              <h3 className="text-lg font-semibold mb-2">No hay ítems disponibles</h3>
               <p className="text-muted-foreground mb-4 max-w-sm">
-                Sé el primero en compartir materiales reutilizables en tu comunidad
+                Sé el primero en compartir ítems reutilizables en tu comunidad
               </p>
               <Button asChild>
                 <Link to="/app/publicar">

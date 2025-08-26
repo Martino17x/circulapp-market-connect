@@ -6,7 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-export type Material = {
+export type Item = {
   id: string;
   type: string;
   weightKg: number;
@@ -22,11 +22,11 @@ export type Material = {
 };
 
 interface Props {
-  material: Material;
+  item: Item;
   showEditButton?: boolean;
 }
 
-const MaterialCard = ({ material, showEditButton = false }: Props) => {
+const ItemCard = ({ item, showEditButton = false }: Props) => {
   const { user } = useAuth();
   return (
     <article className="group animate-fade-in">
@@ -34,8 +34,8 @@ const MaterialCard = ({ material, showEditButton = false }: Props) => {
         {/* Imagen principal */}
         <div className="aspect-[4/3] w-full overflow-hidden">
           <img
-            src={material.image}
-            alt={`${material.title || material.type} - ${material.type}`}
+            src={item.image}
+            alt={`${item.title || item.type} - ${item.type}`}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           />
@@ -45,7 +45,7 @@ const MaterialCard = ({ material, showEditButton = false }: Props) => {
           {/* Título */}
           <div>
             <h3 className="text-lg font-semibold leading-tight line-clamp-2">
-              {material.title || material.type}
+              {item.title || item.type}
             </h3>
           </div>
 
@@ -54,7 +54,7 @@ const MaterialCard = ({ material, showEditButton = false }: Props) => {
             {/* Categoría */}
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Categoría</span>
-              <Badge variant="secondary" className="capitalize">{material.type}</Badge>
+              <Badge variant="secondary" className="capitalize">{item.type}</Badge>
             </div>
 
             {/* Peso estimado */}
@@ -62,7 +62,7 @@ const MaterialCard = ({ material, showEditButton = false }: Props) => {
               <span className="text-sm text-muted-foreground">Peso</span>
               <span className="inline-flex items-center gap-1 text-sm font-medium">
                 <Scale className="size-4" />
-                {material.weightKg} kg
+                {item.weightKg} kg
               </span>
             </div>
 
@@ -70,14 +70,14 @@ const MaterialCard = ({ material, showEditButton = false }: Props) => {
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Precio</span>
               <div className="inline-flex items-center gap-1 text-sm font-medium">
-                {material.isFree ? (
+                {item.isFree ? (
                   <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
                     Gratuito
                   </Badge>
                 ) : (
                   <span className="inline-flex items-center gap-1 text-primary font-semibold">
                     <DollarSign className="size-4" />
-                    {material.price || 0}
+                    {item.price || 0}
                   </span>
                 )}
               </div>
@@ -88,23 +88,23 @@ const MaterialCard = ({ material, showEditButton = false }: Props) => {
               <span className="text-sm text-muted-foreground">Ubicación</span>
               <span className="inline-flex items-center gap-1 text-sm font-medium">
                 <MapPin className="size-4" />
-                {material.locationName}
+                {item.locationName}
               </span>
             </div>
           </div>
 
           {/* Botones de acción */}
           <div className="flex items-center gap-2 pt-2 border-t">
-            {showEditButton && user?.id === material.user_id ? (
+            {showEditButton && user?.id === item.user_id ? (
               <Button variant="outline" className="flex-1" asChild>
-                <Link to={`/app/material/${material.id}/edit`}>
+                <Link to={`/app/item/${item.id}/edit`}>
                   <Edit className="mr-2 h-4 w-4" />
                   Editar
                 </Link>
               </Button>
             ) : (
               <Button variant="outline" className="flex-1" asChild>
-                <Link to={`/app/material/${material.id}`}>
+                <Link to={`/app/item/${item.id}`}>
                   <Eye className="mr-2 h-4 w-4" />
                   Ver más
                 </Link>
@@ -127,4 +127,4 @@ const MaterialCard = ({ material, showEditButton = false }: Props) => {
   );
 };
 
-export default MaterialCard;
+export default ItemCard;

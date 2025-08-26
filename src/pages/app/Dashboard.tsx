@@ -58,37 +58,37 @@ export default function Dashboard() {
     if (!user) return;
     
     try {
-      // Fetch user's materials count
-      const { data: userMaterials, error: materialsError } = await supabase
-        .from('materials')
+      // Fetch user's items count
+      const { data: userItems, error: itemsError } = await supabase
+        .from('items')
         .select('*')
         .eq('user_id', user.id);
 
-      if (materialsError) throw materialsError;
+      if (itemsError) throw itemsError;
 
-      // Fetch total materials count for connections metric
-      const { data: allMaterials, error: allMaterialsError } = await supabase
-        .from('materials')
+      // Fetch total items count for connections metric
+      const { data: allItems, error: allItemsError } = await supabase
+        .from('items')
         .select('id');
 
-      if (allMaterialsError) throw allMaterialsError;
+      if (allItemsError) throw allItemsError;
 
       // Calculate stats
-      const publishedCount = userMaterials?.length || 0;
-      const soldCount = userMaterials?.filter(m => m.status === 'sold')?.length || 0;
-      const reusedCount = userMaterials?.filter(m => m.status === 'completed')?.length || 0;
-      const connectionsCount = allMaterials?.length || 0;
+      const publishedCount = userItems?.length || 0;
+      const soldCount = userItems?.filter(m => m.status === 'sold')?.length || 0;
+      const reusedCount = userItems?.filter(m => m.status === 'completed')?.length || 0;
+      const connectionsCount = allItems?.length || 0;
 
       const dashboardStats: DashboardStats[] = [
         {
-          title: "Artículos publicados",
+          title: "Ítems publicados",
           value: publishedCount.toString(),
           description: "Total de publicaciones",
           icon: Plus,
           trend: "+0%"
         },
         {
-          title: "Artículos vendidos",
+          title: "Ítems vendidos",
           value: soldCount.toString(),
           description: "Transacciones exitosas",
           icon: ShoppingCart,
@@ -112,19 +112,19 @@ export default function Dashboard() {
 
       setStats(dashboardStats);
 
-      // Create recent activities from user's materials
-      const activities: RecentActivity[] = userMaterials?.slice(0, 4).map((material, index) => ({
-        id: material.id,
-        type: "material_added",
-        title: `Publicaste: ${material.title}`,
-        description: `${material.material_type} - ${material.weight_kg}kg`,
-        time: new Date(material.created_at).toLocaleDateString('es-ES', {
+      // Create recent activities from user's items
+      const activities: RecentActivity[] = userItems?.slice(0, 4).map((item, index) => ({
+        id: item.id,
+        type: "item_added",
+        title: `Publicaste: ${item.title}`,
+        description: `${item.material_type} - ${item.weight_kg}kg`,
+        time: new Date(item.created_at).toLocaleDateString('es-ES', {
           day: 'numeric',
           month: 'short',
           hour: '2-digit',
           minute: '2-digit'
         }),
-        status: material.status || 'active'
+        status: item.status || 'active'
       })) || [];
 
       setRecentActivities(activities);
@@ -139,7 +139,7 @@ export default function Dashboard() {
     document.title = "Inicio | Circulapp";
     setMeta(
       "description",
-      "Panel de control de Circulapp: gestiona tus materiales, conexiones y actividad en la economía circular."
+      "Panel de control de Circulapp: gestiona tus ítems, conexiones y actividad en la economía circular."
     );
     
     if (user) {
@@ -167,7 +167,7 @@ export default function Dashboard() {
             <Button asChild>
               <Link to="/app/publicar">
                 <Plus className="mr-2 h-4 w-4" />
-                Publicar artículo
+                Publicar ítem
               </Link>
             </Button>
           </div>
@@ -275,7 +275,7 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <p>No hay actividad reciente</p>
-                  <p className="text-xs mt-1">Comienza publicando tu primer artículo</p>
+                  <p className="text-xs mt-1">Comienza publicando tu primer ítem</p>
                 </div>
               )}
             </div>
@@ -297,7 +297,7 @@ export default function Dashboard() {
               <Button variant="outline" asChild className="h-auto p-4 justify-start">
                 <Link to="/app/marketplace">
                   <div className="text-left">
-                    <div className="font-medium">Explorar materiales</div>
+                    <div className="font-medium">Explorar ítems</div>
                     <div className="text-xs text-muted-foreground">Buscar en tu zona</div>
                   </div>
                 </Link>

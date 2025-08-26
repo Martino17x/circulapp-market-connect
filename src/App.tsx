@@ -15,10 +15,10 @@ import ComingSoon from "./pages/app/ComingSoon";
 import Profile from "./pages/app/Profile";
 import MapPage from "./pages/app/MapPage";
 import Marketplace from "./pages/app/Marketplace";
-import PublishMaterial from "./pages/app/PublishMaterial";
+import PublishItem from "./pages/app/PublishItem";
 import UserProfile from "./pages/app/UserProfile";
-import MaterialDetail from "./pages/app/MaterialDetail";
-import EditMaterial from "./pages/app/EditMaterial";
+import ItemDetail from "./pages/app/ItemDetail";
+import EditItem from "./pages/app/EditItem";
 
 const queryClient = new QueryClient();
 
@@ -42,13 +42,13 @@ const App = () => (
             }>
               <Route index element={<Dashboard />} />
               <Route path="marketplace" element={<Marketplace />} />
-              <Route path="publicar" element={<PublishMaterial />} />
+              <Route path="publicar" element={<PublishItem />} />
               <Route path="buscar" element={<Marketplace />} />
               <Route path="mapa" element={<MapPage />} />
               <Route path="chat" element={<ComingSoon />} />
               <Route path="recoleccion" element={<ComingSoon />} />
-              <Route path="material/:id" element={<MaterialDetail />} />
-              <Route path="material/:id/edit" element={<EditMaterial />} />
+              <Route path="item/:id" element={<ItemDetail />} />
+              <Route path="item/:id/edit" element={<EditItem />} />
               <Route path="perfil" element={<UserProfile />} />
               <Route path="denuncias" element={<ComingSoon />} />
             </Route>
