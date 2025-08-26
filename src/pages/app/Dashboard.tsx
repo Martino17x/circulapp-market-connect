@@ -167,7 +167,7 @@ export default function Dashboard() {
             <Button asChild>
               <Link to="/app/publicar">
                 <Plus className="mr-2 h-4 w-4" />
-                Publicar ítem
+                Publicar Articulo
               </Link>
             </Button>
           </div>

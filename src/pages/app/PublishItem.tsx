@@ -115,7 +115,7 @@ export default function PublishItem() {
     if (!user) {
       toast({
         title: "Error",
-        description: "Debes estar autenticado para publicar ítems",
+        description: "Debes estar autenticado para publicar articulos",
         variant: "destructive"
       });
       return;
@@ -218,7 +218,7 @@ export default function PublishItem() {
                     }}
                   />
                   <Label htmlFor="is_free" className="text-sm font-normal">
-                    Ítem gratuito
+                    Articulo gratuito
                   </Label>
                 </div>
                 

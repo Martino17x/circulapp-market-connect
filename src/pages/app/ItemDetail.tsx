@@ -120,7 +120,7 @@ export default function ItemDetail() {
       try {
         await navigator.share({
           title: item?.title,
-          text: `Mira este ítem en Circulapp: ${item?.title}`,
+          text: `Mira este articulo en Circulapp: ${item?.title}`,
           url: window.location.href,
         });
       } catch (error) {
@@ -165,9 +165,9 @@ export default function ItemDetail() {
   if (!item) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-lg font-semibold mb-2">Ítem no encontrado</h3>
+        <h3 className="text-lg font-semibold mb-2">Articulo no encontrado</h3>
         <p className="text-muted-foreground mb-4">
-          El ítem que buscas no existe o ha sido eliminado.
+          El articulo que buscas no existe o ha sido eliminado.
         </p>
         <Button asChild>
           <Link to="/app/marketplace">Volver al Marketplace</Link>

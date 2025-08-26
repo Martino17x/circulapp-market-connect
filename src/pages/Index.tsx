@@ -34,7 +34,7 @@ const Index = () => {
     document.title = "Circulapp - Marketplace Comunitario";
     setMeta(
       "description",
-      "Dale una segunda vida a todo. Conecta con tu comunidad para intercambiar desde electrodomésticos y muebles hasta ítems como plástico, cartón y vidrio. Únete a la economía circular"
+      "Dale una segunda vida a todo. Conecta con tu comunidad para intercambiar desde electrodomésticos y muebles hasta materiales como plástico, cartón y vidrio. Únete a la economía circular"
     );
     fetchItems();
   }, []);
