@@ -81,14 +81,14 @@ export default function Dashboard() {
 
       const dashboardStats: DashboardStats[] = [
         {
-          title: "Ítems publicados",
+          title: "Articulos publicados",
           value: publishedCount.toString(),
           description: "Total de publicaciones",
           icon: Plus,
           trend: "+0%"
         },
         {
-          title: "Ítems vendidos",
+          title: "Articulos vendidos",
           value: soldCount.toString(),
           description: "Transacciones exitosas",
           icon: ShoppingCart,
@@ -139,7 +139,7 @@ export default function Dashboard() {
     document.title = "Inicio | Circulapp";
     setMeta(
       "description",
-      "Panel de control de Circulapp: gestiona tus ítems, conexiones y actividad en la economía circular."
+      "Panel de control de Circulapp: gestiona tus Articulos, conexiones y actividad en la economía circular."
     );
     
     if (user) {
@@ -275,7 +275,7 @@ export default function Dashboard() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <p>No hay actividad reciente</p>
-                  <p className="text-xs mt-1">Comienza publicando tu primer ítem</p>
+                  <p className="text-xs mt-1">Comienza publicando tu primer Articulo</p>
                 </div>
               )}
             </div>

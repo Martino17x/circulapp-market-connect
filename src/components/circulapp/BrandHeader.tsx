@@ -13,7 +13,7 @@ const BrandHeader = () => {
         </Link>
         <div className="flex items-center gap-4">
           <Link to="/auth" className="story-link text-sm font-medium text-primary-foreground/80 hover:text-primary-foreground">
-            Acceder
+            INICIAR SESION
           </Link>
           <Button
             asChild
