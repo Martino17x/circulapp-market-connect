@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SearchFilters, { FilterValues } from "@/components/circulapp/SearchFilters";
-import MaterialCard, { Material } from "@/components/circulapp/MaterialCard";
+import ItemCard, { Item } from "@/components/circulapp/ItemCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search, SlidersHorizontal, Map } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -22,7 +22,7 @@ const setMeta = (name: string, content: string) => {
 
 export default function Marketplace() {
   const { user } = useAuth();
-  const [materials, setMaterials] = useState<Material[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -37,16 +37,16 @@ export default function Marketplace() {
     document.title = "Marketplace | Circulapp";
     setMeta(
       "description",
-      "Explora materiales reutilizables disponibles en tu comunidad. Encuentra plástico, cartón, vidrio y más para proyectos de economía circular."
+      "Explora ítems reutilizables disponibles en tu comunidad. Encuentra plástico, cartón, vidrio y más para proyectos de economía circular."
     );
-    fetchMaterials();
+    fetchItems();
   }, []);
 
-  const fetchMaterials = async () => {
+  const fetchItems = async () => {
     try {
       setLoading(true);
       let query = supabase
-        .from('materials')
+        .from('items')
         .select(`
           id,
           title,
@@ -66,13 +66,13 @@ export default function Marketplace() {
       if (error) {
         toast({
           title: "Error",
-          description: "No se pudieron cargar los materiales",
+          description: "No se pudieron cargar los ítems",
           variant: "destructive"
         });
         return;
       }
 
-      // Fetch user profiles for each material
+      // Fetch user profiles for each item
       const userIds = [...new Set(data?.map(item => item.user_id) || [])];
       const { data: profiles } = await supabase
         .from('profiles')
@@ -84,7 +84,7 @@ export default function Marketplace() {
         return acc;
       }, {} as Record<string, any>) || {};
 
-      const formattedMaterials: Material[] = data?.map(item => {
+      const formattedItems: Item[] = data?.map(item => {
         const profile = profileMap[item.user_id];
         return {
           id: item.id,
@@ -100,11 +100,11 @@ export default function Marketplace() {
         };
       }) || [];
 
-      setMaterials(formattedMaterials);
+      setItems(formattedItems);
     } catch (error) {
       toast({
         title: "Error",
-        description: "Ocurrió un error al cargar los materiales",
+        description: "Ocurrió un error al cargar los ítems",
         variant: "destructive"
       });
     } finally {
@@ -114,7 +114,7 @@ export default function Marketplace() {
 
   const handleFiltersChange = (newFilters: FilterValues) => {
     setFilters(newFilters);
-    // Apply filters to materials list
+    // Apply filters to items list
     applyFilters(newFilters);
   };
 
@@ -122,7 +122,7 @@ export default function Marketplace() {
     try {
       setLoading(true);
       let query = supabase
-        .from('materials')
+        .from('items')
         .select(`
           id,
           title,
@@ -171,7 +171,7 @@ export default function Marketplace() {
         return acc;
       }, {} as Record<string, any>) || {};
 
-      const formattedMaterials: Material[] = data?.map(item => {
+      const formattedItems: Item[] = data?.map(item => {
         const profile = profileMap[item.user_id];
         return {
           id: item.id,
@@ -187,7 +187,7 @@ export default function Marketplace() {
         };
       }) || [];
 
-      setMaterials(formattedMaterials);
+      setItems(formattedItems);
     } catch (error) {
       toast({
         title: "Error",
@@ -199,12 +199,12 @@ export default function Marketplace() {
     }
   };
 
-  const filteredMaterials = materials.filter(material => {
-    const matchesSearch = material.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         material.locationName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filters.category === "todos" || material.type === filters.category;
-    const matchesWeight = material.weightKg >= filters.minWeight;
-    const matchesDistance = material.distanceKm <= filters.maxDistance;
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         item.locationName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = filters.category === "todos" || item.type === filters.category;
+    const matchesWeight = item.weightKg >= filters.minWeight;
+    const matchesDistance = item.distanceKm <= filters.maxDistance;
     
     return matchesSearch && matchesCategory && matchesWeight && matchesDistance;
   });
@@ -217,7 +217,7 @@ export default function Marketplace() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Marketplace</h1>
             <p className="text-muted-foreground">
-              Descubre materiales reutilizables en tu comunidad
+              Descubre ítems reutilizables en tu comunidad
             </p>
           </div>
           <div className="flex gap-2">
@@ -230,7 +230,7 @@ export default function Marketplace() {
             <Button asChild>
               <Link to="/app/publicar">
                 <Plus className="mr-2 h-4 w-4" />
-                Publicar Artículo
+                Publicar Ítem
               </Link>
             </Button>
           </div>
@@ -269,7 +269,7 @@ export default function Marketplace() {
       <section>
         <div className="mb-4 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {loading ? "Cargando..." : `${filteredMaterials.length} materiales encontrados`}
+            {loading ? "Cargando..." : `${filteredItems.length} ítems encontrados`}
           </p>
         </div>
 
@@ -289,14 +289,14 @@ export default function Marketplace() {
               </div>
             ))}
           </div>
-        ) : filteredMaterials.length > 0 ? (
+        ) : filteredItems.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredMaterials.map((material) => (
-              <MaterialCard 
-                key={material.id} 
-                material={{
-                  ...material,
-                  image: material.image || `/src/assets/circulapp/${material.type}.jpg`
+            {filteredItems.map((item) => (
+              <ItemCard 
+                key={item.id} 
+                item={{
+                  ...item,
+                  image: item.image || `/src/assets/circulapp/${item.type}.jpg`
                 }} 
               />
             ))}
@@ -306,7 +306,7 @@ export default function Marketplace() {
             <div className="rounded-full bg-muted p-6 mb-4">
               <Search className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">No se encontraron materiales</h3>
+            <h3 className="text-lg font-semibold mb-2">No se encontraron ítems</h3>
             <p className="text-muted-foreground mb-4 max-w-sm">
               Intenta ajustar tus filtros o explora una zona más amplia
             </p>

@@ -20,7 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface MaterialData {
+interface ItemData {
   id: string;
   title: string;
   description: string;
@@ -43,33 +43,33 @@ const setMeta = (name: string, content: string) => {
   tag.setAttribute("content", content);
 };
 
-export default function MaterialDetail() {
+export default function ItemDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [material, setMaterial] = useState<MaterialData | null>(null);
+  const [item, setItem] = useState<ItemData | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     if (id) {
-      fetchMaterial();
+      fetchItem();
     }
   }, [id]);
 
   useEffect(() => {
-    if (material) {
-      document.title = `${material.title} | Circulapp`;
-      setMeta("description", `${material.description || `Material ${material.material_type}`} - ${material.location_name}`);
+    if (item) {
+      document.title = `${item.title} | Circulapp`;
+      setMeta("description", `${item.description || `Ítem ${item.material_type}`} - ${item.location_name}`);
     }
-  }, [material]);
+  }, [item]);
 
-  const fetchMaterial = async () => {
+  const fetchItem = async () => {
     try {
       setLoading(true);
       
       const { data, error } = await supabase
-        .from('materials')
+        .from('items')
         .select('*')
         .eq('id', id)
         .single();
@@ -77,14 +77,14 @@ export default function MaterialDetail() {
       if (error) {
         toast({
           title: "Error",
-          description: "No se pudo cargar el material",
+          description: "No se pudo cargar el ítem",
           variant: "destructive"
         });
         navigate('/app/marketplace');
         return;
       }
 
-      setMaterial(data);
+      setItem(data);
       
       // Fetch user profile if different from current user
       if (data.user_id !== user?.id) {
@@ -99,7 +99,7 @@ export default function MaterialDetail() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Ocurrió un error al cargar el material",
+        description: "Ocurrió un error al cargar el ítem",
         variant: "destructive"
       });
       navigate('/app/marketplace');
@@ -119,8 +119,8 @@ export default function MaterialDetail() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: material?.title,
-          text: `Mira este material en Circulapp: ${material?.title}`,
+          title: item?.title,
+          text: `Mira este articulo en Circulapp: ${item?.title}`,
           url: window.location.href,
         });
       } catch (error) {
@@ -162,12 +162,12 @@ export default function MaterialDetail() {
     );
   }
 
-  if (!material) {
+  if (!item) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-lg font-semibold mb-2">Material no encontrado</h3>
+        <h3 className="text-lg font-semibold mb-2">Articulo no encontrado</h3>
         <p className="text-muted-foreground mb-4">
-          El material que buscas no existe o ha sido eliminado.
+          El articulo que buscas no existe o ha sido eliminado.
         </p>
         <Button asChild>
           <Link to="/app/marketplace">Volver al Marketplace</Link>
@@ -176,8 +176,8 @@ export default function MaterialDetail() {
     );
   }
 
-  const isOwner = material.user_id === user?.id;
-  const defaultImage = `/src/assets/circulapp/${material.material_type}.jpg`;
+  const isOwner = item.user_id === user?.id;
+  const defaultImage = `/src/assets/circulapp/${item.material_type}.jpg`;
 
   return (
     <div className="space-y-6">
@@ -193,9 +193,9 @@ export default function MaterialDetail() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{material.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{item.title}</h1>
             <p className="text-muted-foreground">
-              Publicado el {formatDate(material.created_at)}
+              Publicado el {formatDate(item.created_at)}
             </p>
           </div>
         </div>
@@ -206,8 +206,8 @@ export default function MaterialDetail() {
         <section>
           <div className="aspect-[4/3] w-full overflow-hidden rounded-lg border">
             <img
-              src={material.image_url || defaultImage}
-              alt={material.title}
+              src={item.image_url || defaultImage}
+              alt={item.title}
               className="h-full w-full object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = defaultImage;
@@ -216,41 +216,41 @@ export default function MaterialDetail() {
           </div>
         </section>
 
-        {/* Material Details */}
+        {/* Item Details */}
         <section className="space-y-6">
           <Card>
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <CardTitle className="flex items-center gap-2">
-                    {material.title}
-                    <Badge variant="secondary">{material.material_type}</Badge>
+                    {item.title}
+                    <Badge variant="secondary">{item.material_type}</Badge>
                   </CardTitle>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Scale className="h-4 w-4" />
-                      {material.weight_kg} kg
+                      {item.weight_kg} kg
                     </span>
                     <span className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
-                      {material.location_name}
+                      {item.location_name}
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      {formatDate(material.created_at)}
+                      {formatDate(item.created_at)}
                     </span>
                   </div>
                 </div>
-                <Badge variant={material.status === 'disponible' ? 'default' : 'secondary'}>
-                  {material.status}
+                <Badge variant={item.status === 'disponible' ? 'default' : 'secondary'}>
+                  {item.status}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {material.description && (
+              {item.description && (
                 <div>
                   <h3 className="font-medium mb-2">Descripción</h3>
-                  <p className="text-muted-foreground">{material.description}</p>
+                  <p className="text-muted-foreground">{item.description}</p>
                 </div>
               )}
 
@@ -281,7 +281,7 @@ export default function MaterialDetail() {
 
               {/* Action buttons */}
               <div className="space-y-3">
-                {!isOwner && material.status === 'disponible' && (
+                {!isOwner && item.status === 'disponible' && (
                   <Button 
                     onClick={handleContact} 
                     className="w-full"
@@ -304,7 +304,7 @@ export default function MaterialDetail() {
                   )}
                   {isOwner && (
                     <Button variant="outline" asChild className="flex-1">
-                      <Link to={`/app/material/${material.id}/edit`}>
+                      <Link to={`/app/item/${item.id}/edit`}>
                         Editar
                       </Link>
                     </Button>

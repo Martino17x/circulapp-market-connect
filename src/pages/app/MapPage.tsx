@@ -8,8 +8,8 @@ import { MapPin, Search, Filter, Grid3X3, Navigation } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data for materials on map
-const mockMaterials = [
+// Mock data for items on map
+const mockItems = [
   {
     id: "1",
     type: "Plástico PET",
@@ -52,29 +52,29 @@ const mockMaterials = [
   }
 ];
 
-const materialTypes = ["Todos", "Plástico PET", "Cartón", "Vidrio", "Aluminio", "Metal"];
+const itemTypes = ["Todos", "Plástico PET", "Cartón", "Vidrio", "Aluminio", "Metal"];
 
 const MapPage = () => {
-  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("Todos");
   const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const filteredMaterials = mockMaterials.filter(material => {
-    const matchesSearch = material.locationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         material.userName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = selectedType === "Todos" || material.type === selectedType;
+  const filteredItems = mockItems.filter(item => {
+    const matchesSearch = item.locationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         item.userName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = selectedType === "Todos" || item.type === selectedType;
     return matchesSearch && matchesType;
   });
 
-  const handleMarkerClick = (material: any) => {
-    setSelectedMaterial(material);
+  const handleMarkerClick = (item: any) => {
+    setSelectedItem(item);
   };
 
-  const handleViewDetails = (materialId: string) => {
-    navigate(`/app/buscar/material/${materialId}`);
+  const handleViewDetails = (itemId: string) => {
+    navigate(`/app/buscar/item/${itemId}`);
   };
 
   const handleContact = (userName: string) => {
@@ -90,7 +90,7 @@ const MapPage = () => {
         (position) => {
           toast({
             title: "Ubicación obtenida",
-            description: "Mostrando materiales cerca de tu ubicación",
+            description: "Mostrando ítems cerca de tu ubicación",
           });
         },
         () => {
@@ -104,7 +104,7 @@ const MapPage = () => {
     }
   };
 
-  const getMaterialIcon = (type: string) => {
+  const getItemIcon = (type: string) => {
     const iconMap: { [key: string]: string } = {
       "Plástico PET": "🥤",
       "Cartón": "📦", 
@@ -121,9 +121,9 @@ const MapPage = () => {
       <div className="border-b bg-background p-4">
         <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-foreground">Mapa de Materiales</h1>
+            <h1 className="text-2xl font-bold text-foreground">Mapa de Ítems</h1>
             <Badge variant="secondary" className="hidden sm:inline-flex">
-              {filteredMaterials.length} disponibles
+              {filteredItems.length} disponibles
             </Badge>
           </div>
           
@@ -144,7 +144,7 @@ const MapPage = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {materialTypes.map(type => (
+                  {itemTypes.map(type => (
                     <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
                 </SelectContent>
@@ -184,18 +184,18 @@ const MapPage = () => {
           </div>
 
           {/* Map markers */}
-          {filteredMaterials.map((material, index) => (
+          {filteredItems.map((item, index) => (
             <div
-              key={material.id}
+              key={item.id}
               className="absolute transform -translate-x-1/2 -translate-y-full cursor-pointer z-10 hover:z-20"
               style={{
                 left: `${20 + (index * 15)}%`,
                 top: `${30 + (index * 10)}%`,
               }}
-              onClick={() => handleMarkerClick(material)}
+              onClick={() => handleMarkerClick(item)}
             >
               <div className="bg-primary text-primary-foreground rounded-full w-10 h-10 flex items-center justify-center text-lg shadow-lg hover:scale-110 transition-transform">
-                {getMaterialIcon(material.type)}
+                {getItemIcon(item.type)}
               </div>
               <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-primary" />
             </div>
@@ -207,17 +207,17 @@ const MapPage = () => {
           </div>
         </div>
 
-        {/* Material detail popup */}
-        {selectedMaterial && (
+        {/* Item detail popup */}
+        {selectedItem && (
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 w-80 max-w-[90vw]">
             <Card className="shadow-lg border">
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-semibold text-lg">{selectedMaterial.type}</h3>
+                  <h3 className="font-semibold text-lg">{selectedItem.type}</h3>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedMaterial(null)}
+                    onClick={() => setSelectedItem(null)}
                     className="h-6 w-6 p-0"
                   >
                     ×
@@ -226,20 +226,20 @@ const MapPage = () => {
                 
                 <div className="flex gap-3 mb-3">
                   <img
-                    src={selectedMaterial.image}
-                    alt={selectedMaterial.type}
+                    src={selectedItem.image}
+                    alt={selectedItem.type}
                     className="w-16 h-16 object-cover rounded-lg"
                   />
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground mb-1">
-                      <strong>{selectedMaterial.weightKg} kg</strong>
+                      <strong>{selectedItem.weightKg} kg</strong>
                     </p>
                     <p className="text-sm text-muted-foreground mb-1">
                       <MapPin className="inline h-3 w-3 mr-1" />
-                      {selectedMaterial.locationName} ({selectedMaterial.distance})
+                      {selectedItem.locationName} ({selectedItem.distance})
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Por: {selectedMaterial.userName}
+                      Por: {selectedItem.userName}
                     </p>
                   </div>
                 </div>
@@ -247,7 +247,7 @@ const MapPage = () => {
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    onClick={() => handleViewDetails(selectedMaterial.id)}
+                    onClick={() => handleViewDetails(selectedItem.id)}
                     className="flex-1"
                   >
                     Ver detalles
@@ -255,7 +255,7 @@ const MapPage = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleContact(selectedMaterial.userName)}
+                    onClick={() => handleContact(selectedItem.userName)}
                     className="flex-1"
                   >
                     Contactar
@@ -267,10 +267,10 @@ const MapPage = () => {
         )}
 
         {/* Backdrop for mobile popup */}
-        {selectedMaterial && (
+        {selectedItem && (
           <div
             className="fixed inset-0 bg-black/20 z-20 lg:hidden"
-            onClick={() => setSelectedMaterial(null)}
+            onClick={() => setSelectedItem(null)}
           />
         )}
       </div>

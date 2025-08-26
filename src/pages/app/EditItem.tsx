@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-const materialTypes = [
+const itemTypes = [
   { value: "plastico-pet", label: "Plástico PET" },
   { value: "carton", label: "Cartón" },
   { value: "vidrio", label: "Vidrio" },
@@ -23,7 +23,7 @@ const materialTypes = [
   { value: "otro", label: "Otro" }
 ];
 
-export default function EditMaterial() {
+export default function EditItem() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -43,17 +43,17 @@ export default function EditMaterial() {
 
   useEffect(() => {
     if (id) {
-      fetchMaterial();
+      fetchItem();
     }
   }, [id, user]);
 
-  const fetchMaterial = async () => {
+  const fetchItem = async () => {
     if (!user || !id) return;
 
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('materials')
+        .from('items')
         .select('*')
         .eq('id', id)
         .eq('user_id', user.id)
@@ -62,7 +62,7 @@ export default function EditMaterial() {
       if (error) {
         toast({
           title: "Error",
-          description: "No se pudo cargar el material",
+          description: "No se pudo cargar el ítem",
           variant: "destructive"
         });
         navigate('/app/perfil');
@@ -81,7 +81,7 @@ export default function EditMaterial() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Ocurrió un error al cargar el material",
+        description: "Ocurrió un error al cargar el ítem",
         variant: "destructive"
       });
       navigate('/app/perfil');
@@ -106,7 +106,7 @@ export default function EditMaterial() {
     try {
       setSaving(true);
       const { error } = await supabase
-        .from('materials')
+        .from('items')
         .update({
           title: formData.title,
           price: formData.is_free ? 0 : parseFloat(formData.price) || 0,
@@ -124,14 +124,14 @@ export default function EditMaterial() {
 
       toast({
         title: "¡Éxito!",
-        description: "Material actualizado correctamente"
+        description: "Ítem actualizado correctamente"
       });
       
       navigate('/app/perfil');
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudo actualizar el material",
+        description: "No se pudo actualizar el ítem",
         variant: "destructive"
       });
     } finally {
@@ -145,7 +145,7 @@ export default function EditMaterial() {
     try {
       setDeleting(true);
       const { error } = await supabase
-        .from('materials')
+        .from('items')
         .delete()
         .eq('id', id)
         .eq('user_id', user.id);
@@ -153,15 +153,15 @@ export default function EditMaterial() {
       if (error) throw error;
 
       toast({
-        title: "Material eliminado",
-        description: "El material ha sido eliminado correctamente"
+        title: "Ítem eliminado",
+        description: "El ítem ha sido eliminado correctamente"
       });
       
       navigate('/app/perfil');
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudo eliminar el material",
+        description: "No se pudo eliminar el ítem",
         variant: "destructive"
       });
     } finally {
@@ -197,15 +197,15 @@ export default function EditMaterial() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
-          <h1 className="text-2xl font-bold">Editar Material</h1>
+          <h1 className="text-2xl font-bold">Editar Articulo</h1>
         </div>
 
         <form onSubmit={handleSubmit}>
           <Card>
             <CardHeader>
-              <CardTitle>Información del Material</CardTitle>
+              <CardTitle>Información de la publicación</CardTitle>
               <CardDescription>
-                Actualiza la información de tu material publicado
+                Actualiza la información de tu articulo publicado
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -215,7 +215,7 @@ export default function EditMaterial() {
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Ej: Cartón de mudanza"
+                  placeholder="Ej: Cajas de mudanza"
                   required
                 />
               </div>
@@ -246,7 +246,7 @@ export default function EditMaterial() {
                       <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
                     <SelectContent>
-                      {materialTypes.map((type) => (
+                      {itemTypes.map((type) => (
                         <SelectItem key={type.value} value={type.value}>
                           {type.label}
                         </SelectItem>
@@ -262,7 +262,7 @@ export default function EditMaterial() {
                   id="location_name"
                   value={formData.location_name}
                   onChange={(e) => setFormData({ ...formData, location_name: e.target.value })}
-                  placeholder="Ej: Villa Crespo, CABA"
+                  placeholder="Ej: Charbonier, Cordoba"
                   required
                 />
               </div>
@@ -274,7 +274,7 @@ export default function EditMaterial() {
                     checked={formData.is_free}
                     onCheckedChange={(checked) => setFormData({ ...formData, is_free: checked as boolean })}
                   />
-                  <Label htmlFor="is_free">Material gratuito</Label>
+                  <Label htmlFor="is_free">Articulo gratuito</Label>
                 </div>
               </div>
 
@@ -299,7 +299,7 @@ export default function EditMaterial() {
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Describe el estado y características del material..."
+                  placeholder="Describe el estado y características del articulo..."
                   rows={4}
                 />
               </div>
@@ -314,9 +314,9 @@ export default function EditMaterial() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>¿Eliminar material?</AlertDialogTitle>
+                      <AlertDialogTitle>¿Eliminar Publicación?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Esta acción no se puede deshacer. El material será eliminado permanentemente.
+                        Esta acción no se puede deshacer. El articulo será eliminado permanentemente.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
