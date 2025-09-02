@@ -3,8 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Scale, User, MessageCircle, Eye, DollarSign, Edit } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Item = {
   id: string;
@@ -28,6 +29,60 @@ interface Props {
 
 const ItemCard = ({ item, showEditButton = false }: Props) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleContactClick = async () => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "Debes iniciar sesión para contactar al vendedor",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!item.user_id) {
+      toast({
+        title: "Error", 
+        description: "No se pudo obtener la información del vendedor",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (user.id === item.user_id) {
+      toast({
+        title: "Información",
+        description: "No puedes contactarte a ti mismo",
+        variant: "default"
+      });
+      return;
+    }
+
+    try {
+      const { data } = await (supabase as any).rpc('start_conversation_about_item', {
+        other_user_id: item.user_id,
+        item_id: item.id,
+        initial_message: null
+      });
+
+
+      toast({
+        title: "Chat iniciado",
+        description: "Se ha abierto una conversación sobre este producto"
+      });
+
+      // Navegar al chat con la conversación específica
+      navigate(`/app/chat?conversation=${data}`);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo iniciar la conversación",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <article className="group animate-fade-in">
       <Card className="h-full overflow-hidden hover-scale group-hover:shadow-md">
@@ -113,9 +168,7 @@ const ItemCard = ({ item, showEditButton = false }: Props) => {
             <Button
               variant="default"
               className="flex-1"
-              onClick={() =>
-                toast({ title: "Chat", description: "Pronto podrás contactar por chat al oferente." })
-              }
+              onClick={handleContactClick}
             >
               <MessageCircle className="mr-2 h-4 w-4" />
               Contactar

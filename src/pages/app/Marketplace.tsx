@@ -96,7 +96,8 @@ export default function Marketplace() {
           userName: profile?.full_name || profile?.username || 'Usuario Anónimo',
           title: item.title,
           price: 0,
-          isFree: true
+          isFree: true,
+          user_id: item.user_id
         };
       }) || [];
 
@@ -183,7 +184,8 @@ export default function Marketplace() {
           userName: profile?.full_name || profile?.username || 'Usuario Anónimo',
           title: item.title,
           price: 0,
-          isFree: true
+          isFree: true,
+          user_id: item.user_id
         };
       }) || [];
 
