@@ -366,10 +366,10 @@ export default function AppLayout() {
           <TopBar />
           
           <main className={cn(
-            "flex-1 overflow-auto p-4 lg:p-6",
+            "flex-1 flex flex-col min-h-0 overflow-hidden p-4 lg:p-6",
             isMobile && "pb-20" // Add padding bottom for mobile bottom nav
           )}>
-            <div className="animate-fade-in">
+            <div className="animate-fade-in flex-1 min-h-0 flex flex-col">
               <Outlet />
             </div>
           </main>

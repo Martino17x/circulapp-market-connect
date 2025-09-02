@@ -6,6 +6,8 @@ import signinIllustration from "@/assets/circulapp/signin-illustration.jpg";
 import googleLogo from "@/assets/brands/google.svg";
 import facebookLogo from "@/assets/brands/facebook.svg";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import type { Provider } from "@supabase/supabase-js";
 
 const setMeta = (name: string, content: string) => {
   let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -37,6 +39,19 @@ export default function SignIn() {
     );
     ensureCanonical();
   }, []);
+
+  const handleOAuthSignIn = async (provider: Provider) => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/app`,
+      },
+    });
+    if (error) {
+      console.error("Error during OAuth sign-in:", error);
+      // Aquí podrías mostrar una notificación al usuario
+    }
+  };
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-background">
@@ -81,12 +96,12 @@ export default function SignIn() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button type="button" variant="outline" className="w-full">
-                <img src={googleLogo} alt="Google" className="h-5 w-5" loading="lazy" />
+              <Button type="button" variant="outline" className="w-full" onClick={() => handleOAuthSignIn('google')}>
+                <img src={googleLogo} alt="Google" className="h-5 w-5 mr-2" loading="lazy" />
                 Google
               </Button>
-              <Button type="button" variant="outline" className="w-full">
-                <img src={facebookLogo} alt="Facebook" className="h-5 w-5" loading="lazy" />
+              <Button type="button" variant="outline" className="w-full" onClick={() => handleOAuthSignIn('facebook')}>
+                <img src={facebookLogo} alt="Facebook" className="h-5 w-5 mr-2" loading="lazy" />
                 Facebook
               </Button>
             </div>
