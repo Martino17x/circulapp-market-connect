@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, MapPin, Scale, DollarSign, X, ImageIcon } from "lucide-react";
+import { Upload, MapPin, Scale, DollarSign, X, ImageIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 interface ItemForm {
   title: string;
@@ -52,6 +53,8 @@ export default function PublishItem() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
+  const { uploadMultipleImages, isUploading, uploadProgress } = useImageUpload();
 
   const {
     register,
@@ -121,18 +124,20 @@ export default function PublishItem() {
       return;
     }
 
+    if (selectedImages.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debes subir al menos una imagen",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      let imageUrl = null;
-
-      // For now, we'll use placeholder images based on material type
-      // In production, you would upload the actual image to Supabase Storage
-      if (selectedType) {
-        imageUrl = `/src/assets/circulapp/${selectedType}.jpg`;
-      }
-
-      const { data: itemData, error } = await supabase
+      // Primero crear el ítem para obtener su ID
+      const { data: itemData, error: itemError } = await supabase
         .from('items')
         .insert({
           user_id: user.id,
@@ -141,20 +146,39 @@ export default function PublishItem() {
           material_type: data.material_type,
           weight_kg: data.weight_kg,
           location_name: data.location_name,
-          image_url: imageUrl,
+          image_url: null, // Se actualizará después de subir las imágenes
           price: data.is_free ? 0 : data.price,
           is_free: data.is_free
         })
         .select()
         .single();
 
-      if (error) {
-        throw error;
+      if (itemError) {
+        throw itemError;
+      }
+
+      // Subir las imágenes usando el ID del ítem
+      const uploadResults = await uploadMultipleImages(selectedImages, itemData.id);
+      
+      if (uploadResults.length === 0) {
+        throw new Error("No se pudieron subir las imágenes");
+      }
+
+      // Actualizar el ítem con la URL de la primera imagen
+      const { error: updateError } = await supabase
+        .from('items')
+        .update({
+          image_url: uploadResults[0].url
+        })
+        .eq('id', itemData.id);
+
+      if (updateError) {
+        throw updateError;
       }
 
       toast({
         title: "¡Ítem publicado!",
-        description: "Tu ítem ha sido publicado exitosamente en el marketplace."
+        description: `Tu ítem ha sido publicado exitosamente con ${uploadResults.length} imagen(es).`
       });
 
       navigate("/");
@@ -338,6 +362,7 @@ export default function PublishItem() {
                             size="sm"
                             className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={() => removeImage(index)}
+                            disabled={isUploading || isSubmitting}
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -346,8 +371,26 @@ export default function PublishItem() {
                     </div>
                   )}
                   
+                  {/* Progress bar during upload */}
+                  {isUploading && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm text-muted-foreground">
+                          Subiendo imágenes... {Math.round(uploadProgress)}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Upload area */}
-                  {selectedImages.length < 10 && (
+                  {selectedImages.length < 10 && !isUploading && (
                     <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
                       <div className="space-y-4">
                         <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
@@ -364,17 +407,18 @@ export default function PublishItem() {
                             multiple
                             className="hidden"
                             onChange={handleImageSelect}
+                            disabled={isSubmitting}
                           />
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          PNG, JPG hasta 5MB cada una. Máximo 10 imágenes.
+                          PNG, JPG, WebP, GIF hasta 5MB cada una. Máximo 10 imágenes.
                           {selectedImages.length > 0 && ` (${selectedImages.length}/10)`}
                         </p>
                       </div>
                     </div>
                   )}
                   
-                  {selectedImages.length === 0 && (
+                  {selectedImages.length === 0 && !isUploading && (
                     <p className="text-sm text-destructive">Debes subir al menos una imagen</p>
                   )}
                 </div>
