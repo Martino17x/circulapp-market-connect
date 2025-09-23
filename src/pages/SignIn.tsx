@@ -106,8 +106,22 @@ export default function SignIn() {
               </Button>
             </div>
 
-            <p className="text-xs text-muted-foreground text-center">
-              Al continuar aceptas nuestras políticas comunitarias y de uso responsable.
+            <p className="px-8 text-center text-sm text-muted-foreground">
+              Al hacer clic en continuar, aceptas nuestros{" "}
+              <Link
+                to="/terms-of-service"
+                className="underline underline-offset-4 hover:text-primary"
+              >
+                Términos de Servicio
+              </Link>{" "}
+              y nuestra{" "}
+              <Link
+                to="/privacy-policy"
+                className="underline underline-offset-4 hover:text-primary"
+              >
+                Política de Privacidad
+              </Link>
+              .
             </p>
           </form>
         </article>

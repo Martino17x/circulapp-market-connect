@@ -21,6 +21,8 @@ import UserProfile from "./pages/app/UserProfile";
 import ItemDetail from "./pages/app/ItemDetail";
 import EditItem from "./pages/app/EditItem";
 import ChatPage from "./pages/app/ChatPage";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +37,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<Auth />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
             
             {/* App routes (authenticated) */}
             <Route path="/app" element={

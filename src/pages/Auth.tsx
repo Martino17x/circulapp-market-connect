@@ -408,6 +408,18 @@ export default function Auth() {
                 </Button>
               </div>
 
+              <p className="px-4 text-center text-xs text-muted-foreground">
+                Al continuar, aceptas nuestros{" "}
+                <Link to="/terms-of-service" className="underline hover:text-primary">
+                  Términos de Servicio
+                </Link>{" "}
+                y{" "}
+                <Link to="/privacy-policy" className="underline hover:text-primary">
+                  Política de Privacidad
+                </Link>
+                .
+              </p>
+
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
                   ¿No tenés cuenta?{' '}
@@ -499,8 +511,16 @@ export default function Auth() {
                   {isLoading ? "Creando cuenta..." : "Crear cuenta"}
                 </Button>
 
-                <p className="text-xs text-muted-foreground text-center">
-                  Al registrarte aceptas nuestras políticas comunitarias y de uso responsable.
+                <p className="px-4 text-center text-xs text-muted-foreground">
+                  Al registrarte, aceptas nuestros{" "}
+                  <Link to="/terms-of-service" className="underline hover:text-primary">
+                    Términos de Servicio
+                  </Link>{" "}
+                  y{" "}
+                  <Link to="/privacy-policy" className="underline hover:text-primary">
+                    Política de Privacidad
+                  </Link>
+                  .
                 </p>
               </form>
 
