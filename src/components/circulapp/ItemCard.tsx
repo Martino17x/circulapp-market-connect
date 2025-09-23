@@ -82,6 +82,7 @@ const ItemCard = ({ item, showEditButton = false }: Props) => {
     ? item.image_urls[0] 
     : '/placeholder.svg';
 
+
   return (
     <article className="group animate-fade-in">
       <Card className="h-full overflow-hidden hover-scale group-hover:shadow-md">

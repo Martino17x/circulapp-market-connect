@@ -48,8 +48,97 @@ export default function Marketplace() {
       let query = supabase
         .from('items')
         .select(`
+
           *,
           user:profiles (*)
+
+          id,
+          title,
+          description,
+          material_type,
+          weight_kg,
+          location_name,
+          image_url,
+          created_at,
+          user_id
+        `)
+        .eq('status', 'disponible')
+        .order('created_at', { ascending: false });
+
+      const { data, error } = await query;
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los ítems",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Fetch user profiles for each item
+      const userIds = [...new Set(data?.map(item => item.user_id) || [])];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, username, full_name')
+        .in('user_id', userIds);
+
+      const profileMap = profiles?.reduce((acc, profile) => {
+        acc[profile.user_id] = profile;
+        return acc;
+      }, {} as Record<string, any>) || {};
+
+      const formattedItems: Item[] = data?.map(item => {
+        const profile = profileMap[item.user_id];
+        return {
+          id: item.id,
+          type: item.material_type,
+          weightKg: Number(item.weight_kg),
+          locationName: item.location_name,
+          distanceKm: Math.random() * 5 + 0.5, // TODO: Calculate real distance
+          image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
+          userName: profile?.full_name || profile?.username || 'Usuario Anónimo',
+          title: item.title,
+          price: 0,
+          isFree: true,
+          user_id: item.user_id
+        };
+      }) || [];
+
+      setItems(formattedItems);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al cargar los ítems",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFiltersChange = (newFilters: FilterValues) => {
+    setFilters(newFilters);
+    // Apply filters to items list
+    applyFilters(newFilters);
+  };
+
+  const applyFilters = async (filterValues: FilterValues) => {
+    try {
+      setLoading(true);
+      let query = supabase
+        .from('items')
+        .select(`
+          id,
+          title,
+          description,
+          material_type,
+          weight_kg,
+          location_name,
+          image_url,
+          created_at,
+          user_id
+
         `)
         .eq('status', 'disponible');
 
@@ -83,6 +172,35 @@ export default function Marketplace() {
         ...item,
         userName: (item.user as any)?.full_name || (item.user as any)?.username || 'Anónimo'
       })) || [];
+
+      // Fetch user profiles
+      const userIds = [...new Set(data?.map(item => item.user_id) || [])];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, username, full_name')
+        .in('user_id', userIds);
+
+      const profileMap = profiles?.reduce((acc, profile) => {
+        acc[profile.user_id] = profile;
+        return acc;
+      }, {} as Record<string, any>) || {};
+
+      const formattedItems: Item[] = data?.map(item => {
+        const profile = profileMap[item.user_id];
+        return {
+          id: item.id,
+          type: item.material_type,
+          weightKg: Number(item.weight_kg),
+          locationName: item.location_name,
+          distanceKm: Math.random() * 5 + 0.5, // TODO: Calculate real distance
+          image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
+          userName: profile?.full_name || profile?.username || 'Usuario Anónimo',
+          title: item.title,
+          price: 0,
+          isFree: true,
+          user_id: item.user_id
+        };
+      }) || [];
 
       setItems(formattedItems);
     } catch (error: any) {

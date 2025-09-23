@@ -32,3 +32,5 @@ client_secret_*.json
 !.env.example
 config/credentials.json
 secrets/
+.env
+

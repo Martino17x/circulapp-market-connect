@@ -24,6 +24,7 @@ import ChatPage from "./pages/app/ChatPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
+
 const queryClient = new QueryClient();
 
 const App = () => (
