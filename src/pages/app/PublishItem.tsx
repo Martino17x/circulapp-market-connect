@@ -121,18 +121,61 @@ export default function PublishItem() {
       return;
     }
 
+    if (selectedImages.length === 0) {
+      toast({
+        title: "Error de validación",
+        description: "Debes subir al menos una imagen.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      let imageUrl = null;
+      // 1. Subir TODAS las imágenes a Supabase Storage en paralelo
+      const uploadPromises = selectedImages.map(file => {
+        const fileExt = file.name.split('.').pop();
+        // Añadir un componente aleatorio al nombre para evitar colisiones si se suben en el mismo milisegundo
+        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
 
-      // For now, we'll use placeholder images based on material type
-      // In production, you would upload the actual image to Supabase Storage
-      if (selectedType) {
-        imageUrl = `/src/assets/circulapp/${selectedType}.jpg`;
+        return supabase.storage
+          .from('item-images')
+          .upload(filePath, file);
+      });
+
+      const uploadResults = await Promise.all(uploadPromises);
+
+      // Verificar si hubo errores durante la subida
+      const uploadErrors = uploadResults.filter(result => result.error);
+      if (uploadErrors.length > 0) {
+        // Si hay errores, intentar borrar las imágenes que sí se subieron para no dejar huérfanas
+        const successfulUploads = uploadResults.filter(result => result.data);
+        if (successfulUploads.length > 0) {
+          const pathsToDelete = successfulUploads.map(upload => upload.data.path);
+          await supabase.storage.from('item-images').remove(pathsToDelete);
+        }
+        throw new Error(`Error al subir algunas imágenes: ${uploadErrors.map(e => e.error.message).join(', ')}`);
       }
 
-      const { data: itemData, error } = await supabase
+      // 2. Obtener las URLs públicas de TODAS las imágenes
+      const imageUrls = uploadResults.map(result => {
+        if (result.data) {
+          const { data: urlData } = supabase.storage
+            .from('item-images')
+            .getPublicUrl(result.data.path);
+          return urlData.publicUrl;
+        }
+        return null;
+      }).filter((url): url is string => url !== null);
+
+      if (imageUrls.length === 0) {
+        throw new Error("No se pudieron obtener las URLs de las imágenes subidas.");
+      }
+
+      // 3. Insertar el artículo en la base de datos con el ARRAY de URLs
+      const { error: insertError } = await supabase
         .from('items')
         .insert({
           user_id: user.id,
@@ -141,29 +184,33 @@ export default function PublishItem() {
           material_type: data.material_type,
           weight_kg: data.weight_kg,
           location_name: data.location_name,
-          image_url: imageUrl,
+          image_urls: imageUrls, // Guardar el array de URLs
           price: data.is_free ? 0 : data.price,
           is_free: data.is_free
         })
         .select()
         .single();
 
-      if (error) {
-        throw error;
+      if (insertError) {
+        // Si la inserción en la BD falla, borrar las imágenes que ya se subieron
+        const pathsToDelete = uploadResults.map(upload => upload.data.path);
+        await supabase.storage.from('item-images').remove(pathsToDelete);
+        throw new Error(`Error al crear la publicación: ${insertError.message}`);
       }
 
       toast({
         title: "¡Ítem publicado!",
-        description: "Tu ítem ha sido publicado exitosamente en el marketplace."
+        description: "Tu ítem ha sido publicado exitosamente con todas las imágenes."
       });
 
       navigate("/");
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "No se pudo publicar el ítem",
+        title: "Error en la publicación",
+        description: error.message || "No se pudo publicar el ítem. Revisa la consola para más detalles.",
         variant: "destructive"
       });
+      console.error("Error publishing item:", error);
     } finally {
       setIsSubmitting(false);
     }

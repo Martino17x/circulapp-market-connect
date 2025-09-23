@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SearchFilters, { FilterValues } from "@/components/circulapp/SearchFilters";
@@ -26,7 +26,7 @@ export default function Marketplace() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<FilterValues>({
+  const [activeFilters, setActiveFilters] = useState<FilterValues>({
     q: "",
     category: "todos",
     maxDistance: 10,
@@ -39,112 +39,29 @@ export default function Marketplace() {
       "description",
       "Explora ítems reutilizables disponibles en tu comunidad. Encuentra plástico, cartón, vidrio y más para proyectos de economía circular."
     );
-    fetchItems();
+    fetchAndSetItems(activeFilters);
   }, []);
 
-  const fetchItems = async () => {
+  const fetchAndSetItems = async (filters: FilterValues) => {
     try {
       setLoading(true);
       let query = supabase
         .from('items')
         .select(`
-          id,
-          title,
-          description,
-          material_type,
-          weight_kg,
-          location_name,
-          image_url,
-          created_at,
-          user_id
-        `)
-        .eq('status', 'disponible')
-        .order('created_at', { ascending: false });
-
-      const { data, error } = await query;
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los ítems",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Fetch user profiles for each item
-      const userIds = [...new Set(data?.map(item => item.user_id) || [])];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, username, full_name')
-        .in('user_id', userIds);
-
-      const profileMap = profiles?.reduce((acc, profile) => {
-        acc[profile.user_id] = profile;
-        return acc;
-      }, {} as Record<string, any>) || {};
-
-      const formattedItems: Item[] = data?.map(item => {
-        const profile = profileMap[item.user_id];
-        return {
-          id: item.id,
-          type: item.material_type,
-          weightKg: Number(item.weight_kg),
-          locationName: item.location_name,
-          distanceKm: Math.random() * 5 + 0.5, // TODO: Calculate real distance
-          image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
-          userName: profile?.full_name || profile?.username || 'Usuario Anónimo',
-          title: item.title,
-          price: 0,
-          isFree: true,
-          user_id: item.user_id
-        };
-      }) || [];
-
-      setItems(formattedItems);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Ocurrió un error al cargar los ítems",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFiltersChange = (newFilters: FilterValues) => {
-    setFilters(newFilters);
-    // Apply filters to items list
-    applyFilters(newFilters);
-  };
-
-  const applyFilters = async (filterValues: FilterValues) => {
-    try {
-      setLoading(true);
-      let query = supabase
-        .from('items')
-        .select(`
-          id,
-          title,
-          description,
-          material_type,
-          weight_kg,
-          location_name,
-          image_url,
-          created_at,
-          user_id
+          *,
+          user:profiles (*)
         `)
         .eq('status', 'disponible');
 
-      // Apply category filter
-      if (filterValues.category && filterValues.category !== 'todos') {
-        query = query.eq('material_type', filterValues.category);
+      // Apply filters to the Supabase query
+      if (filters.category && filters.category !== 'todos') {
+        query = query.eq('material_type', filters.category);
       }
-
-      // Apply weight filter
-      if (filterValues.minWeight > 0) {
-        query = query.gte('weight_kg', filterValues.minWeight);
+      if (filters.minWeight > 0) {
+        query = query.gte('weight_kg', filters.minWeight);
+      }
+      if (filters.q) {
+        query = query.textSearch('title', filters.q, { type: 'websearch' });
       }
 
       query = query.order('created_at', { ascending: false });
@@ -154,46 +71,24 @@ export default function Marketplace() {
       if (error) {
         toast({
           title: "Error",
-          description: "No se pudieron aplicar los filtros",
+          description: `No se pudieron cargar los ítems: ${error.message}`,
           variant: "destructive"
         });
         return;
       }
 
-      // Fetch user profiles
-      const userIds = [...new Set(data?.map(item => item.user_id) || [])];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, username, full_name')
-        .in('user_id', userIds);
-
-      const profileMap = profiles?.reduce((acc, profile) => {
-        acc[profile.user_id] = profile;
-        return acc;
-      }, {} as Record<string, any>) || {};
-
-      const formattedItems: Item[] = data?.map(item => {
-        const profile = profileMap[item.user_id];
-        return {
-          id: item.id,
-          type: item.material_type,
-          weightKg: Number(item.weight_kg),
-          locationName: item.location_name,
-          distanceKm: Math.random() * 5 + 0.5, // TODO: Calculate real distance
-          image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
-          userName: profile?.full_name || profile?.username || 'Usuario Anónimo',
-          title: item.title,
-          price: 0,
-          isFree: true,
-          user_id: item.user_id
-        };
-      }) || [];
+      // The data is already in the format we need thanks to the new ItemCard component
+      // We just need to rename the nested user profile for convenience
+      const formattedItems: Item[] = data?.map(item => ({
+        ...item,
+        userName: (item.user as any)?.full_name || (item.user as any)?.username || 'Anónimo'
+      })) || [];
 
       setItems(formattedItems);
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Ocurrió un error al aplicar los filtros",
+        title: "Error general",
+        description: error.message || "Ocurrió un error al cargar los ítems",
         variant: "destructive"
       });
     } finally {
@@ -201,15 +96,19 @@ export default function Marketplace() {
     }
   };
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.locationName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filters.category === "todos" || item.type === filters.category;
-    const matchesWeight = item.weightKg >= filters.minWeight;
-    const matchesDistance = item.distanceKm <= filters.maxDistance;
-    
-    return matchesSearch && matchesCategory && matchesWeight && matchesDistance;
-  });
+  const handleFiltersChange = (newFilters: FilterValues) => {
+    setActiveFilters(newFilters);
+    fetchAndSetItems(newFilters);
+  };
+
+  // Client-side search is simpler now
+  const filteredItems = useMemo(() => {
+    if (!searchQuery) return items;
+    return items.filter(item => 
+      (item.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (item.location_name?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery, items]);
 
   return (
     <div className="space-y-6">
@@ -245,7 +144,7 @@ export default function Marketplace() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar por tipo o ubicación..."
+              placeholder="Buscar por título o ubicación..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -262,7 +161,7 @@ export default function Marketplace() {
 
         {showFilters && (
           <div className="animate-fade-in">
-            <SearchFilters onChange={handleFiltersChange} />
+            <SearchFilters onChange={handleFiltersChange} initialValues={activeFilters} />
           </div>
         )}
       </section>
@@ -296,10 +195,7 @@ export default function Marketplace() {
             {filteredItems.map((item) => (
               <ItemCard 
                 key={item.id} 
-                item={{
-                  ...item,
-                  image: item.image || `/src/assets/circulapp/${item.type}.jpg`
-                }} 
+                item={item} 
               />
             ))}
           </div>
@@ -314,7 +210,7 @@ export default function Marketplace() {
             </p>
             <Button variant="outline" onClick={() => {
               setSearchQuery("");
-              setFilters({
+              handleFiltersChange({
                 q: "",
                 category: "todos",
                 maxDistance: 10,

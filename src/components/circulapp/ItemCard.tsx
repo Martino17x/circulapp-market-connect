@@ -1,26 +1,21 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Scale, User, MessageCircle, Eye, DollarSign, Edit } from "lucide-react";
+import { MapPin, Scale, User, MessageCircle, Eye, DollarSign, Edit, ImageIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
-export type Item = {
-  id: string;
-  type: string;
-  weightKg: number;
-  locationName: string;
-  distanceKm: number;
-  image: string;
-  userName: string;
-  status?: string;
-  title?: string;
-  price?: number;
-  isFree?: boolean;
-  user_id?: string;
-};
+// El tipo de dato que viene de la base de datos
+import { Database } from "@/integrations/supabase/types";
+type DbItem = Database['public']['Tables']['items']['Row'];
+
+// Extendemos el tipo de la BD con campos adicionales que calculamos o unimos
+export interface Item extends DbItem {
+  distanceKm?: number;
+  userName?: string;
+}
 
 interface Props {
   item: Item;
@@ -83,14 +78,18 @@ const ItemCard = ({ item, showEditButton = false }: Props) => {
     }
   };
 
+  const firstImage = item.image_urls && item.image_urls.length > 0 
+    ? item.image_urls[0] 
+    : '/placeholder.svg';
+
   return (
     <article className="group animate-fade-in">
       <Card className="h-full overflow-hidden hover-scale group-hover:shadow-md">
         {/* Imagen principal */}
-        <div className="aspect-[4/3] w-full overflow-hidden">
+        <div className="aspect-[4/3] w-full overflow-hidden bg-muted">
           <img
-            src={item.image}
-            alt={`${item.title || item.type} - ${item.type}`}
+            src={firstImage}
+            alt={item.title || 'Imagen del artículo'}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           />
@@ -100,7 +99,7 @@ const ItemCard = ({ item, showEditButton = false }: Props) => {
           {/* Título */}
           <div>
             <h3 className="text-lg font-semibold leading-tight line-clamp-2">
-              {item.title || item.type}
+              {item.title || 'Artículo sin título'}
             </h3>
           </div>
 
@@ -109,7 +108,7 @@ const ItemCard = ({ item, showEditButton = false }: Props) => {
             {/* Categoría */}
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Categoría</span>
-              <Badge variant="secondary" className="capitalize">{item.type}</Badge>
+              <Badge variant="secondary" className="capitalize">{item.material_type}</Badge>
             </div>
 
             {/* Peso estimado */}
@@ -117,7 +116,7 @@ const ItemCard = ({ item, showEditButton = false }: Props) => {
               <span className="text-sm text-muted-foreground">Peso</span>
               <span className="inline-flex items-center gap-1 text-sm font-medium">
                 <Scale className="size-4" />
-                {item.weightKg} kg
+                {item.weight_kg || 0} kg
               </span>
             </div>
 
@@ -125,7 +124,7 @@ const ItemCard = ({ item, showEditButton = false }: Props) => {
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Precio</span>
               <div className="inline-flex items-center gap-1 text-sm font-medium">
-                {item.isFree ? (
+                {item.is_free ? (
                   <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
                     Gratuito
                   </Badge>
@@ -143,7 +142,7 @@ const ItemCard = ({ item, showEditButton = false }: Props) => {
               <span className="text-sm text-muted-foreground">Ubicación</span>
               <span className="inline-flex items-center gap-1 text-sm font-medium">
                 <MapPin className="size-4" />
-                {item.locationName}
+                {item.location_name}
               </span>
             </div>
           </div>

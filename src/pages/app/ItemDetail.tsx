@@ -5,33 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { 
   ArrowLeft, 
   MapPin, 
   Scale, 
   Calendar, 
   MessageCircle, 
-  User,
   Share,
-  Flag
+  Flag,
+  Edit
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface ItemData {
-  id: string;
-  title: string;
-  description: string;
-  material_type: string;
-  weight_kg: number;
-  location_name: string;
-  image_url: string;
-  created_at: string;
-  user_id: string;
-  status: string;
-}
+import { Item } from "@/components/circulapp/ItemCard"; // Usamos el tipo unificado
 
 const setMeta = (name: string, content: string) => {
   let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -47,9 +36,8 @@ export default function ItemDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [item, setItem] = useState<ItemData | null>(null);
+  const [item, setItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     if (id) {
@@ -70,36 +58,33 @@ export default function ItemDetail() {
       
       const { data, error } = await supabase
         .from('items')
-        .select('*')
+        .select(`
+          *,
+          user:profiles(*)
+        `)
         .eq('id', id)
         .single();
 
-      if (error) {
+      if (error || !data) {
         toast({
           title: "Error",
-          description: "No se pudo cargar el ítem",
+          description: "No se pudo cargar el ítem o no fue encontrado.",
           variant: "destructive"
         });
         navigate('/app/marketplace');
         return;
       }
-
-      setItem(data);
       
-      // Fetch user profile if different from current user
-      if (data.user_id !== user?.id) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('username, full_name, avatar_url')
-          .eq('user_id', data.user_id)
-          .single();
-        
-        setUserProfile(profile);
-      }
-    } catch (error) {
+      const formattedItem: Item = {
+        ...data,
+        userName: (data.user as any)?.full_name || (data.user as any)?.username || 'Anónimo'
+      };
+
+      setItem(formattedItem);
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Ocurrió un error al cargar el ítem",
+        description: error.message || "Ocurrió un error al cargar el ítem",
         variant: "destructive"
       });
       navigate('/app/marketplace');
@@ -108,11 +93,20 @@ export default function ItemDetail() {
     }
   };
 
-  const handleContact = () => {
-    toast({
-      title: "Chat",
-      description: "Pronto podrás contactar por chat al oferente."
-    });
+  const handleContact = async () => {
+    if (!user) return toast({ title: "Debes iniciar sesión", variant: "destructive"});
+    if (!item || !item.user_id) return toast({ title: "Error", description: "No se encontró el vendedor", variant: "destructive"});
+    if (item.user_id === user.id) return toast({ title: "No puedes contactarte a ti mismo"});
+
+    try {
+      const { data: conversationId } = await (supabase as any).rpc('start_conversation_about_item', {
+        other_user_id: item.user_id,
+        item_id: item.id,
+      });
+      navigate(`/app/chat?conversation=${conversationId}`);
+    } catch (error: any) {
+      toast({ title: "Error al iniciar chat", description: error.message, variant: "destructive"});
+    }
   };
 
   const handleShare = async () => {
@@ -165,9 +159,9 @@ export default function ItemDetail() {
   if (!item) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-lg font-semibold mb-2">Articulo no encontrado</h3>
+        <h3 className="text-lg font-semibold mb-2">Artículo no encontrado</h3>
         <p className="text-muted-foreground mb-4">
-          El articulo que buscas no existe o ha sido eliminado.
+          El artículo que buscas no existe o ha sido eliminado.
         </p>
         <Button asChild>
           <Link to="/app/marketplace">Volver al Marketplace</Link>
@@ -177,7 +171,7 @@ export default function ItemDetail() {
   }
 
   const isOwner = item.user_id === user?.id;
-  const defaultImage = `/src/assets/circulapp/${item.material_type}.jpg`;
+  const images = item.image_urls && item.image_urls.length > 0 ? item.image_urls : ['/placeholder.svg'];
 
   return (
     <div className="space-y-6">
@@ -201,19 +195,30 @@ export default function ItemDetail() {
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Image */}
+      <div className="grid gap-8 lg:grid-cols-2">
+        {/* Image Carousel */}
         <section>
-          <div className="aspect-[4/3] w-full overflow-hidden rounded-lg border">
-            <img
-              src={item.image_url || defaultImage}
-              alt={item.title}
-              className="h-full w-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = defaultImage;
-              }}
-            />
-          </div>
+          <Carousel className="w-full">
+            <CarouselContent>
+              {images.map((img, index) => (
+                <CarouselItem key={index}>
+                  <div className="aspect-[4/3] w-full overflow-hidden rounded-lg border bg-muted">
+                    <img
+                      src={img}
+                      alt={`${item.title} - imagen ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            {images.length > 1 && (
+              <>
+                <CarouselPrevious className="absolute left-2" />
+                <CarouselNext className="absolute right-2" />
+              </>
+            )}
+          </Carousel>
         </section>
 
         {/* Item Details */}
@@ -226,7 +231,7 @@ export default function ItemDetail() {
                     {item.title}
                     <Badge variant="secondary">{item.material_type}</Badge>
                   </CardTitle>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
                     <span className="flex items-center gap-1">
                       <Scale className="h-4 w-4" />
                       {item.weight_kg} kg
@@ -250,7 +255,7 @@ export default function ItemDetail() {
               {item.description && (
                 <div>
                   <h3 className="font-medium mb-2">Descripción</h3>
-                  <p className="text-muted-foreground">{item.description}</p>
+                  <p className="text-muted-foreground whitespace-pre-wrap">{item.description}</p>
                 </div>
               )}
 
@@ -261,14 +266,14 @@ export default function ItemDetail() {
                 <h3 className="font-medium">Publicado por</h3>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={userProfile?.avatar_url} />
+                    <AvatarImage src={(item.user as any)?.avatar_url} />
                     <AvatarFallback>
-                      {userProfile?.username?.charAt(0).toUpperCase() || 'U'}
+                      {item.userName?.charAt(0).toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium">
-                      {userProfile?.full_name || userProfile?.username || 'Usuario'}
+                      {item.userName}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Miembro de Circulapp
@@ -305,6 +310,7 @@ export default function ItemDetail() {
                   {isOwner && (
                     <Button variant="outline" asChild className="flex-1">
                       <Link to={`/app/item/${item.id}/edit`}>
+                        <Edit className="mr-2 h-4 w-4" />
                         Editar
                       </Link>
                     </Button>
