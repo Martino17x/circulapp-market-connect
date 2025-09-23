@@ -22,3 +22,13 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Archivos de credenciales y secretos
+client_secret_*.json
+*.pem
+*.p12
+*.key
+.env
+.env.*
+!.env.example
+config/credentials.json
+secrets/
