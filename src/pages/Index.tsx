@@ -116,10 +116,10 @@ const Index = () => {
         <section className="bg-hero">
           <div className="container mx-auto py-10 text-center text-primary-foreground">
             <h1 className="mx-auto max-w-3xl text-3xl font-extrabold tracking-tight md:text-4xl">
-              Circulapp: Marketplace de ítems reutilizables
+              Circulapp: Marketplace de materiales, productos y articulos reutilizables
             </h1>
             <p className="mx-auto mt-3 max-w-2xl text-base md:text-lg opacity-90">
-              Publica, encuentra y reutiliza ítems, productos y articulos. Simple, accesible y colaborativo.
+              Publica, encuentra y reutiliza materiales, productos y articulos. Simple, accesible y colaborativo.
             </p>
           </div>
         </section>
@@ -146,7 +146,7 @@ const HowItWorksSection = () => (
           </div>
           <h3 className="text-xl font-semibold mb-2">1. Publica</h3>
           <p className="text-muted-foreground">
-            Toma una foto de un ítem que ya no necesites, añade una descripción y publícalo en segundos.
+            Toma una foto de un articulo que ya no necesites, añade una descripción y publícalo en segundos.
           </p>
         </div>
         <div className="flex flex-col items-center">
@@ -177,7 +177,7 @@ const RecentItemsSection = ({ items, loading }: { items: Item[], loading: boolea
     return (
       <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-10">Descubre los Últimos Ítems</h2>
+          <h2 className="text-3xl font-bold text-center mb-10">Descubre los últimos Articulos</h2>
           <div className="flex justify-center space-x-4">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="w-full sm:w-1/2 md:w-1/3 p-1">
@@ -199,7 +199,7 @@ const RecentItemsSection = ({ items, loading }: { items: Item[], loading: boolea
   return (
     <section className="py-16 sm:py-20 bg-secondary/30">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-10">Descubre los Últimos Ítems</h2>
+        <h2 className="text-3xl font-bold text-center mb-10">Descubre los últimos Articulos</h2>
         <Carousel opts={{ align: "start", loop: items.length > 3 }} className="w-full max-w-5xl mx-auto">
           <CarouselContent>
             {items.map((item) => (

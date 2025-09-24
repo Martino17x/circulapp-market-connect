@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -202,9 +203,11 @@ export default function UserProfile() {
               </p>
             </div>
           </div>
-          <Button variant="outline">
-            <Settings className="mr-2 h-4 w-4" />
-            Configuración
+          <Button variant="outline" asChild>
+            <Link to="/app/editar-perfil">
+              <Edit3 className="mr-2 h-4 w-4" />
+              Editar mi perfil
+            </Link>
           </Button>
         </div>
       </section>
@@ -275,7 +278,7 @@ export default function UserProfile() {
                     {userStats?.most_frequent_type || 'N/A'}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Articulo más publicado
+                    Articulo m��s publicado
                   </p>
                 </CardContent>
               </Card>
@@ -289,7 +292,7 @@ export default function UserProfile() {
         <Tabs defaultValue="active" className="space-y-4">
           <TabsList>
             <TabsTrigger value="active">
-              articulos activos ({activeItems.length})
+              Articulos activos ({activeItems.length})
             </TabsTrigger>
             <TabsTrigger value="completed">
               Completados ({completedItems.length})

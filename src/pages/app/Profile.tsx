@@ -97,7 +97,10 @@ export default function Profile() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  // avatarUrl: foto personalizada subida por el usuario
+  // googleAvatarUrl: foto de Google del usuario
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const googleAvatarUrl = user?.user_metadata?.avatar_url;
 
   const form = useForm<ProfileFormValues>({
     defaultValues: {
@@ -143,7 +146,7 @@ export default function Profile() {
           bio: data.bio || "",
           phone: data.phone || "",
         });
-        setAvatarUrl(data.avatar_url || undefined);
+  setAvatarUrl(data.avatar_url || undefined);
       } else {
         // Create profile if it doesn't exist
         const { data: newProfile, error: createError } = await supabase
@@ -316,7 +319,7 @@ export default function Profile() {
             {/* Avatar Section */}
             <div className="flex flex-col items-center space-y-4">
               <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
-                <AvatarImage src={avatarUrl || profile.avatar_url || undefined} alt="Foto de perfil" />
+                <AvatarImage src={avatarUrl || profile.avatar_url || googleAvatarUrl || undefined} alt="Foto de perfil" />
                 <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
                   {initials}
                 </AvatarFallback>
@@ -398,7 +401,7 @@ export default function Profile() {
             {/* Avatar Section */}
             <div className="flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={avatarUrl || profile.avatar_url || undefined} alt="Foto de perfil" />
+                <AvatarImage src={avatarUrl || profile.avatar_url || googleAvatarUrl || undefined} alt="Foto de perfil" />
                 <AvatarFallback className="bg-primary text-primary-foreground text-lg font-medium">
                   {initials}
                 </AvatarFallback>
