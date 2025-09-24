@@ -7,7 +7,6 @@ import { toast } from "@/hooks/use-toast";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { Leaf, Mail, Lock, User, ArrowLeft, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import signinIllustration from "@/assets/circulapp/signin-illustration.jpg";
 import googleLogo from "@/assets/brands/google.svg";
 import facebookLogo from "@/assets/brands/facebook.svg";
 
@@ -684,7 +683,7 @@ export default function Auth() {
       <aside className="hidden lg:flex items-stretch surface-subtle">
         <div className="relative w-full overflow-hidden rounded-l-2xl lg:rounded-l-none">
           <img
-            src={signinIllustration}
+            src="/circulapp/signin-illustration.jpg"
             alt="Vecinos colaborando en la reutilización de materiales en Circulapp"
             className="h-full w-full object-cover"
             loading="lazy"
