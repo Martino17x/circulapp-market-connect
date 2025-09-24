@@ -1,6 +1,6 @@
 import BrandHeader from "@/components/circulapp/BrandHeader";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Camera, Users, Repeat } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
@@ -128,6 +128,7 @@ const Index = () => {
         <RecentItemsSection items={items} loading={loading} />
         <ImpactSection />
         <CtaSection />
+        <InstallAppSection />
       </main>
     </div>
   );
@@ -268,5 +269,68 @@ const CtaSection = () => (
     </div>
   </section>
 );
+
+const InstallAppSection = () => {
+  const [askInstall, setAskInstall] = useState(true);
+  const [showInstall, setShowInstall] = useState(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Intentar disparar el evento de instalación si está disponible
+  const handleInstallClick = () => {
+    window.dispatchEvent(new Event('beforeinstallprompt'));
+  };
+
+  const handleNo = () => {
+    setShowInstall(false);
+    setAskInstall(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setShowInstall(true);
+      setAskInstall(true);
+    }, 20 * 60 * 1000);
+  };
+
+  if (!showInstall) return null;
+
+  return (
+    <section className="py-16 sm:py-24 bg-gradient-to-r from-primary/5 to-primary/10 text-center">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center mb-2 shadow-lg">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-download text-primary-foreground"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">¿Quieres instalar nuestra aplicación?</h2>
+          {askInstall ? (
+            <div className="flex gap-2 mb-4">
+              <Button size="lg" className="shadow-elegant" onClick={() => setAskInstall(false)}>
+                Sí
+              </Button>
+              <Button variant="outline" size="lg" className="shadow-elegant" onClick={handleNo}>
+                No
+              </Button>
+            </div>
+          ) : (
+            <>
+              <p className="text-muted-foreground max-w-lg mx-auto mb-4">
+                Instala Circulapp en tu dispositivo para acceder más rápido, recibir notificaciones y usarla incluso sin conexión. ¡Lleva la economía circular en tu bolsillo!
+              </p>
+              <Button size="lg" className="shadow-elegant mb-4" onClick={handleInstallClick}>
+                Instalar
+              </Button>
+              <div className="max-w-md mx-auto bg-muted/30 rounded-lg p-4 text-sm text-muted-foreground mb-2">
+                <strong>Importante:</strong> Por favor, inicia sesión antes de instalar la aplicación para disfrutar de todas las funcionalidades.
+              </div>
+              <div className="max-w-md mx-auto bg-muted/30 rounded-lg p-4 text-sm text-muted-foreground">
+                <strong>¿Cómo instalar?</strong><br />
+                En tu navegador, busca el ícono <span className="inline-block align-middle">&#x2795;</span> o el menú de opciones y selecciona <b>"Instalar app"</b>.<br />
+                En dispositivos móviles, también puedes agregarla a tu pantalla de inicio desde el menú de opciones.
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
 
 export default Index;
