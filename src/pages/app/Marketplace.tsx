@@ -48,8 +48,19 @@ export default function Marketplace() {
       let query = supabase
         .from('items')
         .select(`
-          *,
-          user:profiles (*)
+          id,
+          title,
+          description,
+          material_type,
+          weight_kg,
+          location_name,
+          image_urls,
+          status,
+          created_at,
+          price,
+          is_free,
+          user_id,
+          user:profiles (full_name, username)
         `)
         .eq('status', 'disponible');
 
@@ -77,12 +88,31 @@ export default function Marketplace() {
         return;
       }
 
-      // The data is already in the format we need thanks to the new ItemCard component
-      // We just need to rename the nested user profile for convenience
-      const formattedItems: Item[] = data?.map(item => ({
-        ...item,
-        userName: (item.user as any)?.full_name || (item.user as any)?.username || 'Anónimo'
-      })) || [];
+      const formattedItems: Item[] = data?.map(item => {
+        const imagePath = (item.image_urls && item.image_urls.length > 0) ? item.image_urls[0] : null;
+        let imageUrl;
+
+        if (imagePath) {
+          // Si la ruta ya es una URL completa (empieza con http/https), usarla directamente
+          if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            imageUrl = imagePath;
+          } else {
+            // Si es una ruta relativa, construir la URL pública
+            const cleanedImagePath = imagePath.startsWith('public/item-images/')
+              ? imagePath.substring('public/item-images/'.length)
+              : imagePath;
+            imageUrl = supabase.storage.from('item-images').getPublicUrl(cleanedImagePath).data.publicUrl;
+          }
+        } else {
+          imageUrl = `/src/assets/circulapp/${item.material_type}.jpg`;
+        }
+
+        return {
+          ...item,
+          userName: (item.user as any)?.full_name || (item.user as any)?.username || 'Anónimo',
+          image: imageUrl // Añadimos la URL de la imagen construida
+        };
+      }) || [];
 
       setItems(formattedItems);
     } catch (error: any) {

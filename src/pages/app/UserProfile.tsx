@@ -58,7 +58,7 @@ export default function UserProfile() {
     document.title = "Mi Perfil | Circulapp";
     setMeta(
       "description",
-      "Gestiona tu perfil, estadísticas y ítems publicados en Circulapp."
+      "Gestiona tu perfil, estadísticas y articulos publicados en Circulapp."
     );
     fetchUserStats();
     fetchUserItems();
@@ -116,7 +116,7 @@ export default function UserProfile() {
           material_type,
           weight_kg,
           location_name,
-          image_url,
+          image_urls,
           status,
           created_at,
           price,
@@ -128,26 +128,47 @@ export default function UserProfile() {
 
       if (error) throw error;
 
-      const formattedItems: Item[] = data?.map(item => ({
-        id: item.id,
-        type: item.material_type,
-        weightKg: Number(item.weight_kg),
-        locationName: item.location_name,
-        distanceKm: 0, // Own items
-        image: item.image_url || `/src/assets/circulapp/${item.material_type}.jpg`,
-        userName: getUserName(),
-        status: item.status,
-        title: item.title,
-        price: item.price || 0,
-        isFree: item.is_free || false,
-        user_id: item.user_id
-      })) || [];
+      const formattedItems: Item[] = data?.map(item => {
+        const imagePath = (item.image_urls && item.image_urls.length > 0) ? item.image_urls[0] : null;
+        console.log("Item image_urls:", item.image_urls); // LOG AQUI
+        let imageUrl;
+
+        if (imagePath) {
+          // Si la ruta ya es una URL completa (empieza con http/https), usarla directamente
+          if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            imageUrl = imagePath;
+          } else {
+            // Si es una ruta relativa, construir la URL pública
+            const cleanedImagePath = imagePath.startsWith('public/item-images/')
+              ? imagePath.substring('public/item-images/'.length)
+              : imagePath;
+            imageUrl = supabase.storage.from('item-images').getPublicUrl(cleanedImagePath).data.publicUrl;
+          }
+        } else {
+          imageUrl = `/src/assets/circulapp/${item.material_type}.jpg`;
+        }
+
+        return {
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          material_type: item.material_type,
+          weightKg: Number(item.weight_kg),
+          locationName: item.location_name,
+          image: imageUrl,
+          status: item.status,
+          created_at: item.created_at,
+          price: item.price || 0,
+          isFree: item.is_free || false,
+          user_id: item.user_id
+        };
+      }) || [];
 
       setUserItems(formattedItems);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudieron cargar tus ítems",
+        description: "No se pudieron cargar tus articulos",
         variant: "destructive"
       });
     } finally {
@@ -207,7 +228,7 @@ export default function UserProfile() {
             <>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Ítems publicados</CardTitle>
+                  <CardTitle className="text-sm font-medium">Articulos publicados</CardTitle>
                   <Package className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -226,7 +247,7 @@ export default function UserProfile() {
                 <CardContent>
                   <div className="text-2xl font-bold">{userStats?.total_weight_kg || 0} kg</div>
                   <p className="text-xs text-muted-foreground">
-                    Ítem compartido
+                    Articulo compartido
                   </p>
                 </CardContent>
               </Card>
@@ -239,7 +260,7 @@ export default function UserProfile() {
                 <CardContent>
                   <div className="text-2xl font-bold">{userStats?.completed_posts || 0}</div>
                   <p className="text-xs text-muted-foreground">
-                    Ítems entregados
+                    Articulos entregados
                   </p>
                 </CardContent>
               </Card>
@@ -254,7 +275,7 @@ export default function UserProfile() {
                     {userStats?.most_frequent_type || 'N/A'}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Ítem más publicado
+                    Articulo más publicado
                   </p>
                 </CardContent>
               </Card>
@@ -268,7 +289,7 @@ export default function UserProfile() {
         <Tabs defaultValue="active" className="space-y-4">
           <TabsList>
             <TabsTrigger value="active">
-              Ítems activos ({activeItems.length})
+              articulos activos ({activeItems.length})
             </TabsTrigger>
             <TabsTrigger value="completed">
               Completados ({completedItems.length})
@@ -281,9 +302,9 @@ export default function UserProfile() {
           <TabsContent value="active">
             <Card>
               <CardHeader>
-                <CardTitle>Ítems disponibles</CardTitle>
+                <CardTitle>Articulos disponibles</CardTitle>
                 <CardDescription>
-                  Ítems que actualmente están disponibles para recolección
+                  Articulos que actualmente están disponibles para recolección
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -308,13 +329,13 @@ export default function UserProfile() {
                 ) : (
                   <div className="text-center py-12">
                     <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No tienes ítems activos</h3>
+                    <h3 className="text-lg font-semibold mb-2">No tienes articulos activos</h3>
                     <p className="text-muted-foreground mb-4">
-                      Publica tu primer ítem para comenzar a participar
+                      Publica tu primer Articulo para comenzar a participar
                     </p>
                     <Button>
                       <Edit3 className="mr-2 h-4 w-4" />
-                      Publicar ítem
+                      Publicar Articulo
                     </Button>
                   </div>
                 )}
@@ -325,9 +346,9 @@ export default function UserProfile() {
           <TabsContent value="completed">
             <Card>
               <CardHeader>
-                <CardTitle>Ítems completados</CardTitle>
+                <CardTitle>Articulos completados</CardTitle>
                 <CardDescription>
-                  Historial de ítems que ya fueron recolectados
+                  Historial de articulos que ya fueron recolectados
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -360,9 +381,9 @@ export default function UserProfile() {
                 ) : (
                   <div className="text-center py-12">
                     <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No tienes ítems completados</h3>
-                    <p className="text-muted-foreground">
-                      Aquí aparecerán los ítems que hayas entregado exitosamente
+                    <h3 className="text-lg font-semibold mb-2">No tienes articulos completados</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Aquí aparecerán los articulos que hayas entregado exitosamente
                     </p>
                   </div>
                 )}
@@ -373,9 +394,9 @@ export default function UserProfile() {
           <TabsContent value="all">
             <Card>
               <CardHeader>
-                <CardTitle>Todos los ítems</CardTitle>
+                <CardTitle>Todos los articulos</CardTitle>
                 <CardDescription>
-                  Historial completo de todos tus ítems publicados
+                  Historial completo de todos tus articulos publicados
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -418,13 +439,13 @@ export default function UserProfile() {
                 ) : (
                   <div className="text-center py-12">
                     <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No tienes ítems publicados</h3>
+                    <h3 className="text-lg font-semibold mb-2">No tienes articulos publicados</h3>
                     <p className="text-muted-foreground mb-4">
-                      Comienza a compartir ítems con tu comunidad
+                      Comienza a compartir articulos con tu comunidad
                     </p>
                     <Button>
                       <Edit3 className="mr-2 h-4 w-4" />
-                      Publicar primer ítem
+                      Publicar primer articulo
                     </Button>
                   </div>
                 )}

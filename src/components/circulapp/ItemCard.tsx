@@ -15,6 +15,7 @@ type DbItem = Database['public']['Tables']['items']['Row'];
 export interface Item extends DbItem {
   distanceKm?: number;
   userName?: string;
+  image?: string; // Aseguramos que la prop image exista
 }
 
 interface Props {
@@ -78,17 +79,13 @@ const ItemCard = ({ item, showEditButton = false }: Props) => {
     }
   };
 
-  const firstImage = item.image_urls && item.image_urls.length > 0 
-    ? item.image_urls[0] 
-    : '/placeholder.svg';
-
   return (
     <article className="group animate-fade-in">
       <Card className="h-full overflow-hidden hover-scale group-hover:shadow-md">
         {/* Imagen principal */}
         <div className="aspect-[4/3] w-full overflow-hidden bg-muted">
           <img
-            src={firstImage}
+            src={item.image || '/placeholder.svg'} // Usamos directamente item.image
             alt={item.title || 'Imagen del artículo'}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
