@@ -226,10 +226,10 @@ const RecentItemsSection = ({ items, loading }: { items: Item[], loading: boolea
 
 const ImpactSection = () => {
   const materials = [
-    { name: "Plástico", img: "/src/assets/circulapp/plastic-pet.jpg" },
-    { name: "Vidrio", img: "/src/assets/circulapp/glass.jpg" },
-    { name: "Cartón", img: "/src/assets/circulapp/cardboard.jpg" },
-    { name: "Aluminio", img: "/src/assets/circulapp/aluminum.jpg" },
+    { name: "Plástico", img: "/circulapp/plastic-pet.jpg" },
+    { name: "Vidrio", img: "/circulapp/glass.jpg" },
+    { name: "Cartón", img: "/circulapp/cardboard.jpg" },
+    { name: "Aluminio", img: "/circulapp/aluminum.jpg" },
   ];
 
   return (
