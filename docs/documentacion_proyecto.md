@@ -4,7 +4,7 @@
 
 Este es un proyecto de React con TypeScript que utiliza Vite como bundler. La aplicación está enfocada en la economía circular, permitiendo a los usuarios publicar, buscar y gestionar materiales reutilizables.
 
-### Tecnologías Principales:
+### Tecnologías principales:
 - **Frontend**: React, TypeScript, Tailwind CSS
 - **Routing**: React Router
 - **Estado**: React Query
@@ -34,7 +34,31 @@ La aplicación sigue una estructura organizada:
    - Almacenamiento de datos (perfiles, ítems)
    - Consultas en tiempo real
 
-## Funcionalidades Principales
+## Ruteo de la App (real)
+
+Las rutas están definidas en `src/App.tsx` y protegidas con `ProtectedRoute` dentro del layout `src/components/circulapp/AppLayout.tsx`.
+
+- **Públicas**:
+  - `/` → `Index`
+  - `/auth` y `/reset-password` → `Auth`
+  - `/privacy-policy` → `PrivacyPolicy`
+  - `/terms-of-service` → `TermsOfService`
+- **Protegidas** (bajo `/app`):
+  - `/app` → `Dashboard`
+  - `/app/marketplace` y `/app/buscar` → `Marketplace`
+  - `/app/publicar` → `PublishItem`
+  - `/app/mapa` → `MapPage`
+  - `/app/chat` → `ChatPage`
+  - `/app/recoleccion` → `ComingSoon`
+  - `/app/item/:id` → `ItemDetail`
+  - `/app/item/:id/edit` → `EditItem`
+  - `/app/perfil` → `UserProfile`
+  - `/app/editar-perfil` → `Profile`
+  - `/app/denuncias` → `ComingSoon`
+
+Más detalles en `docs/routing.md`.
+
+## Funcionalidades principales
 
 1. **Marketplace de Materiales**: Permite a los usuarios publicar y encontrar materiales reutilizables.
 
@@ -85,15 +109,18 @@ La aplicación trabaja principalmente con:
   - `weight_kg`: Peso en kilogramos
   - `location_name`: Nombre de la ubicación
   - `latitude` y `longitude`: Coordenadas geográficas
-  - `image_url`: URL de la imagen del ítem
+  - `image_urls`: ARRAY de URLs de imágenes del ítem (migración: `20250923180000_add_multiple_images_to_items.sql`)
   - `status`: Estado (disponible, reservado, retirado)
   - `created_at` y `updated_at`: Timestamps
+  - `price`: Precio numérico
+  - `is_free`: Booleano, si es gratuito
 
 - **Seguridad**:
   - Políticas RLS que permiten:
-    - Ver ítems disponibles a todos los usuarios
+    - Ver ítems disponibles a todos los usuarios (incluye `anon` con `status = 'disponible'`)
     - Ver ítems propios independientemente del estado
     - Crear, actualizar y eliminar solo ítems propios
+  - Ver políticas en `20250819130000_fix_items_api_access.sql` y `20250923220000_allow_anon_read_on_items.sql`
 
 ### 3. Vista de Estadísticas (`user_stats`)
 - **Propósito**: Proporciona estadísticas agregadas por usuario
@@ -104,6 +131,19 @@ La aplicación trabaja principalmente con:
   - Publicaciones completadas
   - Fecha de última publicación
   - Tipo de material más frecuente
+
+Implementado como función `get_user_stats(uuid)` en `20250923230000_create_get_user_stats_function.sql`.
+
+### 4. Sistema de Chat (tablas y funcion)
+- Tablas: `conversations`, `messages` con RLS y triggers para `updated_at`.
+- Funciones:
+  - `get_or_create_conversation(user1_id, user2_id)`
+  - `start_conversation_about_item(other_user_id, item_id, initial_message)`
+- Ver migraciones: `20250902100000_create_chat_system.sql` y `20250902110000_add_item_references_to_messages.sql`.
+
+### 5. Storage de Imágenes
+- Bucket `item-images` creado en `20250902210000_create_storage_bucket.sql`.
+- En frontend, subida y obtención de URL pública en `src/pages/app/PublishItem.tsx` y lectura en `src/pages/app/Marketplace.tsx` e `src/pages/app/ItemDetail.tsx`.
 
 ### Características Generales
 - Implementación de Row Level Security (RLS) en todas las tablas
@@ -119,7 +159,17 @@ La aplicación trabaja principalmente con:
 - **src/integrations/supabase/client.ts**: Configuración del cliente de Supabase.
 - **src/components/circulapp/AppLayout.tsx**: Layout principal para las páginas autenticadas.
 - **src/pages/app/Marketplace.tsx**: Implementación del marketplace de materiales.
+ - **src/pages/app/PublishItem.tsx**: Publicación con subida múltiple de imágenes a Storage.
+ - **src/pages/app/ItemDetail.tsx**: Detalle de ítem y acción de iniciar chat.
+ - **src/pages/app/EditItem.tsx**: Edición y eliminación de publicaciones propias.
 
 ## Notas Adicionales
 
 El proyecto está bien estructurado, siguiendo buenas prácticas de desarrollo y con una clara separación de responsabilidades entre componentes. La interfaz de usuario es moderna y utiliza componentes reutilizables para mantener la consistencia visual.
+
+## Referencias rápidas
+
+- Configuración y variables de entorno: `docs/instalacion_configuracion.md`
+- Detalle de rutas: `docs/routing.md`
+- Detalle de Supabase (tablas, RLS, funcion, storage): `docs/supabase.md`
+- Anexo técnico: `docs/anexo_tecnico.md`

@@ -318,6 +318,14 @@ export default function Dashboard() {
                   </div>
                 </Link>
               </Button>
+              <Button variant="outline" asChild className="h-auto p-4 justify-start">
+                <Link to="/">
+                  <div className="text-left">
+                    <div className="font-medium">Landing</div>
+                    <div className="text-xs text-muted-foreground">Ir a la página principal</div>
+                  </div>
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

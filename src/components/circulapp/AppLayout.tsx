@@ -85,6 +85,12 @@ const navigationItems = [
     icon: Recycle,
     description: "Gestionar recolecciones"
   },
+  {
+    title: "Landing",
+    url: "/",
+    icon: Recycle, // Puedes elegir otro icono si prefieres
+    description: "Ir a la página principal"
+  },
 ];
 
 const secondaryItems = [
