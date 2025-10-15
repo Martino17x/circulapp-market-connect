@@ -21,8 +21,11 @@ import UserProfile from "./pages/app/UserProfile";
 import ItemDetail from "./pages/app/ItemDetail";
 import EditItem from "./pages/app/EditItem";
 import ChatPage from "./pages/app/ChatPage";
+import CollectionPage from "./pages/app/CollectionPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+
+console.log("🟢 App.tsx - CollectionPage importado:", CollectionPage);
 
 const queryClient = new QueryClient();
 
@@ -52,7 +55,7 @@ const App = () => (
               <Route path="buscar" element={<Marketplace />} />
               <Route path="mapa" element={<MapPage />} />
               <Route path="chat" element={<ChatPage />} />
-              <Route path="recoleccion" element={<ComingSoon />} />
+              <Route path="recoleccion" element={<CollectionPage />} />
               <Route path="item/:id" element={<ItemDetail />} />
               <Route path="item/:id/edit" element={<EditItem />} />
               <Route path="perfil" element={<UserProfile />} />

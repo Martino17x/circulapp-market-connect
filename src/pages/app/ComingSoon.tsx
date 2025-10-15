@@ -37,6 +37,9 @@ const pageInfo: Record<string, { title: string; description: string }> = {
 
 export default function ComingSoon() {
   const location = useLocation();
+  console.log("🔴 ComingSoon - Se está mostrando este componente en:", location.pathname);
+  console.log("🔴 ESTE NO DEBERÍA MOSTRARSE EN /app/recoleccion");
+  
   const currentPage = pageInfo[location.pathname] || {
     title: "Funcionalidad",
     description: "Esta sección estará disponible próximamente."
@@ -57,6 +60,9 @@ export default function ComingSoon() {
           <CardDescription className="text-center">
             {currentPage.description}
           </CardDescription>
+          <div className="mt-4 p-2 bg-red-100 text-red-800 rounded text-xs">
+            ⚠️ COMPONENTE: ComingSoon.tsx
+          </div>
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <p className="text-sm text-muted-foreground">

@@ -62,11 +62,11 @@ Más detalles en `docs/routing.md`.
 
 1. **Marketplace de Materiales**: Permite a los usuarios publicar y encontrar materiales reutilizables.
 
-2. **Sistema de Mapas**: Visualización geográfica de los materiales disponibles.
+2. **Sistema de Mapas**: Vista de mapa prototipada con datos mock mientras se prepara la integración con mapas reales.
 
 3. **Perfiles de Usuario**: Gestión de información personal y materiales publicados.
 
-4. **Chat**: Funcionalidad para comunicación entre usuarios (marcada como "próximamente").
+4. **Chat**: Conversaciones en tiempo real con Supabase, gestión de conversaciones, mensajes y enlaces a publicaciones desde `src/pages/app/ChatPage.tsx`.
 
 5. **Recolección**: Sistema para gestionar la recolección de materiales (marcada como "próximamente").
 
@@ -172,4 +172,5 @@ El proyecto está bien estructurado, siguiendo buenas prácticas de desarrollo y
 - Configuración y variables de entorno: `docs/instalacion_configuracion.md`
 - Detalle de rutas: `docs/routing.md`
 - Detalle de Supabase (tablas, RLS, funcion, storage): `docs/supabase.md`
+- Chat y comunicación en tiempo real: `docs/chat.md`
 - Anexo técnico: `docs/anexo_tecnico.md`
