@@ -1,0 +1,336 @@
+import BrandHeader from "@/components/circulapp/BrandHeader";
+import { Button } from "@/components/ui/button";
+import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import { Camera, Users, Repeat } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
+import { Item } from "@/components/circulapp/ItemCard";
+import ItemCard from "@/components/circulapp/ItemCard";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext"; // Importar useAuth
+
+// Helper to set meta tags
+const setMeta = (name: string, content: string) => {
+  let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+  if (!tag) {
+    tag = document.createElement("meta");
+    tag.setAttribute("name", name);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute("content", content);
+};
+
+const Index = () => {
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth(); // Obtener el usuario del contexto
+
+  useEffect(() => {
+    document.title = "Circulapp - Marketplace Comunitario de Economía Circular";
+    setMeta(
+      "description",
+      "Dale una segunda vida a todo. Conecta con tu comunidad para intercambiar desde electrodomésticos y muebles hasta materiales como plástico, cartón y vidrio. Únete a la economía circular."
+    );
+    fetchItems();
+  }, []);
+
+  const fetchItems = async () => {
+    try {
+      setLoading(true);
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('items')
+        .select('id, title, material_type, image_urls, is_free, price, location_name, user_id, weight_kg, created_at')
+        .eq('status', 'disponible')
+        .order('created_at', { ascending: false })
+        .limit(7);
+
+      if (itemsError) throw itemsError;
+
+      if (itemsData && itemsData.length > 0) {
+        const userIds = [...new Set(itemsData.map(item => item.user_id))];
+        const { data: profiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_id, username, full_name')
+          .in('user_id', userIds);
+
+        if (profileError) throw profileError;
+
+        const profileMap = profiles.reduce((acc, profile) => {
+          acc[profile.user_id] = profile;
+          return acc;
+        }, {} as Record<string, { username: string; full_name: string }>);
+
+        const formattedItems: Item[] = itemsData.map(item => {
+          const profile = profileMap[item.user_id];
+          
+          const imagePath = (item.image_urls && item.image_urls.length > 0) ? item.image_urls[0] : null;
+          let imageUrl;
+
+          if (imagePath) {
+            // Si la ruta ya es una URL completa (empieza con http/https), usarla directamente
+            if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+              imageUrl = imagePath;
+            } else {
+              // Si es una ruta relativa, construir la URL pública
+              // Eliminar el prefijo 'public/item-images/' si existe en la ruta almacenada
+              const cleanedImagePath = imagePath.startsWith('public/item-images/')
+                ? imagePath.substring('public/item-images/'.length)
+                : imagePath;
+              imageUrl = supabase.storage.from('item-images').getPublicUrl(cleanedImagePath).data.publicUrl;
+            }
+          } else {
+            imageUrl = `/src/assets/circulapp/${item.material_type}.jpg`;
+          }
+
+          return {
+            id: item.id,
+            type: item.material_type,
+            image: imageUrl,
+            title: item.title,
+            price: item.is_free ? 0 : Number(item.price || 0),
+            isFree: item.is_free || false,
+            locationName: item.location_name,
+            userName: profile?.full_name || profile?.username || 'Usuario Anónimo',
+            weightKg: Number(item.weight_kg || 0),
+            distanceKm: Math.random() * 5 + 0.5, // Placeholder
+          };
+        });
+        setItems(formattedItems);
+      } else {
+        setItems([]);
+      }
+    } catch (error) {
+      console.error("Error fetching items for carousel:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <BrandHeader user={user} /> {/* Pasar el usuario al BrandHeader */}
+
+      <main>
+        {/* Hero */}
+        <section className="bg-hero">
+          <div className="container mx-auto py-10 text-center text-primary-foreground">
+            <h1 className="mx-auto max-w-3xl text-3xl font-extrabold tracking-tight md:text-4xl">
+              Circulapp: Marketplace de materiales, productos y articulos reutilizables
+            </h1>
+            <p className="mx-auto mt-3 max-w-2xl text-base md:text-lg opacity-90">
+              Publica, encuentra y reutiliza materiales, productos y articulos. Simple, accesible y colaborativo.
+            </p>
+          </div>
+        </section>
+
+        <HowItWorksSection />
+        <RecentItemsSection items={items} loading={loading} />
+        <ImpactSection />
+        <CtaSection />
+        <InstallAppSection />
+      </main>
+    </div>
+  );
+};
+
+// ... The rest of the components (HowItWorksSection, RecentItemsSection, etc.) remain the same ...
+
+const HowItWorksSection = () => (
+  <section className="py-16 sm:py-20">
+    <div className="container mx-auto px-4">
+      <h2 className="text-3xl font-bold text-center mb-10">¿Cómo funciona?</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+        <div className="flex flex-col items-center">
+          <div className="rounded-full bg-primary/10 text-primary p-4 mb-4">
+            <Camera className="h-8 w-8" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">1. Publica</h3>
+          <p className="text-muted-foreground">
+            Toma una foto de un articulo que ya no necesites, añade una descripción y publícalo en segundos.
+          </p>
+        </div>
+        <div className="flex flex-col items-center">
+          <div className="rounded-full bg-primary/10 text-primary p-4 mb-4">
+            <Users className="h-8 w-8" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">2. Conecta</h3>
+          <p className="text-muted-foreground">
+            Personas de tu barrio o comunidad verán tu artículo y podrán contactarte para coordinar la entrega.
+          </p>
+        </div>
+        <div className="flex flex-col items-center">
+          <div className="rounded-full bg-primary/10 text-primary p-4 mb-4">
+            <Repeat className="h-8 w-8" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">3. Reutiliza</h3>
+          <p className="text-muted-foreground">
+            Dale una segunda vida a tus objetos y contribuye a un modelo de consumo más sostenible y local.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
+const RecentItemsSection = ({ items, loading }: { items: Item[], loading: boolean }) => {
+  if (loading) {
+    return (
+      <section className="py-16 sm:py-20">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-10">Descubre los últimos Articulos</h2>
+          <div className="flex justify-center space-x-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="w-full sm:w-1/2 md:w-1/3 p-1">
+                 <Skeleton className="aspect-[4/3] w-full rounded-lg" />
+                 <div className="space-y-2 p-4">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (items.length === 0) return null;
+
+  return (
+    <section className="py-16 sm:py-20 bg-secondary/30">
+      <div className="container mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-10">Descubre los últimos Articulos</h2>
+        <Carousel opts={{ align: "start", loop: items.length > 3 }} className="w-full max-w-5xl mx-auto">
+          <CarouselContent>
+            {items.map((item) => (
+              <CarouselItem key={item.id} className="md:basis-1/2 lg:basis-1/3">
+                <div className="p-2">
+                  <ItemCard item={item} />
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="hidden sm:flex" />
+          <CarouselNext className="hidden sm:flex" />
+        </Carousel>
+        <div className="text-center mt-10">
+          <Button asChild size="lg" className="shadow-elegant">
+            <Link to="/app/marketplace">Explorar el Marketplace</Link>
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const ImpactSection = () => {
+  const materials = [
+    { name: "Plástico", img: "/circulapp/plastic-pet.jpg" },
+    { name: "Vidrio", img: "/circulapp/glass.jpg" },
+    { name: "Cartón", img: "/circulapp/cardboard.jpg" },
+    { name: "Aluminio", img: "/circulapp/aluminum.jpg" },
+  ];
+
+  return (
+    <section className="py-16 sm:py-20 bg-muted/40">
+      <div className="container mx-auto px-4">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold mb-4">El Impacto de Reutilizar</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto mb-10">
+            Cada vez que reutilizas un objeto, estás reduciendo la demanda de nuevos productos, ahorrando energía y disminuyendo la cantidad de residuos que terminan en vertederos.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {materials.map((material) => (
+            <div key={material.name} className="relative group rounded-lg overflow-hidden shadow-lg">
+              <img src={material.img} alt={material.name} className="w-full h-48 object-cover transform group-hover:scale-105 transition-transform duration-300" />
+              <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                <h3 className="text-white text-2xl font-bold">{material.name}</h3>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const CtaSection = () => (
+  <section className="py-16 sm:py-24 text-center">
+    <div className="container mx-auto px-4">
+      <h2 className="text-3xl md:text-4xl font-bold mb-4">Únete a la Economía Circular</h2>
+      <p className="text-muted-foreground max-w-xl mx-auto mb-8">
+        Forma parte del cambio. Empieza a publicar y encontrar artículos en tu comunidad para construir un futuro más sostenible.
+      </p>
+      <Button size="lg" asChild className="shadow-elegant">
+        <Link to="/app">Empezar Ahora</Link>
+      </Button>
+    </div>
+  </section>
+);
+
+const InstallAppSection = () => {
+  const [askInstall, setAskInstall] = useState(true);
+  const [showInstall, setShowInstall] = useState(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Intentar disparar el evento de instalación si está disponible
+  const handleInstallClick = () => {
+    window.dispatchEvent(new Event('beforeinstallprompt'));
+  };
+
+  const handleNo = () => {
+    setShowInstall(false);
+    setAskInstall(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      setShowInstall(true);
+      setAskInstall(true);
+    }, 20 * 60 * 1000);
+  };
+
+  if (!showInstall) return null;
+
+  return (
+    <section className="py-16 sm:py-24 bg-gradient-to-r from-primary/5 to-primary/10 text-center">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center mb-2 shadow-lg">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-download text-primary-foreground"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">¿Quieres instalar nuestra aplicación?</h2>
+          {askInstall ? (
+            <div className="flex gap-2 mb-4">
+              <Button size="lg" className="shadow-elegant" onClick={() => setAskInstall(false)}>
+                Sí
+              </Button>
+              <Button variant="outline" size="lg" className="shadow-elegant" onClick={handleNo}>
+                No
+              </Button>
+            </div>
+          ) : (
+            <>
+              <p className="text-muted-foreground max-w-lg mx-auto mb-4">
+                Instala Circulapp en tu dispositivo para acceder más rápido, recibir notificaciones y usarla incluso sin conexión. ¡Lleva la economía circular en tu bolsillo!
+              </p>
+              <Button size="lg" className="shadow-elegant mb-4" onClick={handleInstallClick}>
+                Instalar
+              </Button>
+              <div className="max-w-md mx-auto bg-muted/30 rounded-lg p-4 text-sm text-muted-foreground mb-2">
+                <strong>Importante:</strong> Por favor, inicia sesión antes de instalar la aplicación para disfrutar de todas las funcionalidades.
+              </div>
+              <div className="max-w-md mx-auto bg-muted/30 rounded-lg p-4 text-sm text-muted-foreground">
+                <strong>¿Cómo instalar?</strong><br />
+                En tu navegador, busca el ícono <span className="inline-block align-middle">&#x2795;</span> o el menú de opciones y selecciona <b>"Instalar app"</b>.<br />
+                En dispositivos móviles, también puedes agregarla a tu pantalla de inicio desde el menú de opciones.
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Index;
